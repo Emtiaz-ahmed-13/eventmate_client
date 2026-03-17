@@ -16,6 +16,7 @@ import {
   ArrowUpRight, 
   Plus, 
   Search,
+  Settings,
   Layers,
   BarChart3,
   Clock,

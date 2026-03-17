@@ -462,23 +462,23 @@ export default function EventDetails() {
          {/* Payment Modal */}
          {showPaymentModal && (
             <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-               <div className="bg-slate-900/90 backdrop-blur-xl rounded-[2rem] border border-white/10 p-8 max-w-md w-full">
-                  <div className="flex items-center justify-between mb-6">
-                     <h3 className="text-2xl font-black text-white">Payment Required</h3>
+               <div className="bg-slate-900/90 backdrop-blur-xl rounded-[2rem] border border-white/10 p-6 max-w-sm w-full">
+                  <div className="flex items-center justify-between mb-4">
+                     <h3 className="text-xl font-black text-white">Payment</h3>
                      <Button 
                         variant="outline" 
                         size="icon" 
                         onClick={handleClosePaymentModal}
-                        className="text-slate-400 hover:text-white border-white/10"
+                        className="text-slate-400 hover:text-white border-white/10 h-8 w-8"
                      >
-                        <X className="w-5 h-5" />
+                        <X className="w-4 h-4" />
                      </Button>
                   </div>
                   
                   {event?.approvalRequired && (
-                     <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                        <p className="text-yellow-400 text-sm font-medium">
-                           ⚠️ Payment will be processed after host approval
+                     <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                        <p className="text-yellow-400 text-xs font-medium">
+                           ⚠️ Payment after host approval
                         </p>
                      </div>
                   )}
@@ -494,21 +494,18 @@ export default function EventDetails() {
                         />
                      </StripeProvider>
                   ) : (
-                     <div className="space-y-6">
-                        <div className="p-6 bg-slate-800/50 rounded-xl border border-white/5">
-                           <div className="flex items-center justify-between mb-4">
-                              <span className="text-slate-400 font-medium">Event Fee</span>
-                              <span className="text-2xl font-black text-white">${event?.joiningFee}</span>
+                     <div className="space-y-4">
+                        <div className="p-4 bg-slate-800/50 rounded-xl border border-white/5">
+                           <div className="flex items-center justify-between mb-2">
+                              <span className="text-slate-400 text-sm">Event Fee</span>
+                              <span className="text-xl font-black text-white">${event?.joiningFee}</span>
                            </div>
-                           <div className="text-sm text-slate-500">
-                              <p className="font-medium">{event?.name}</p>
-                              <p>{new Date(event?.dateTime).toLocaleDateString()}</p>
-                           </div>
+                           <p className="text-xs text-slate-500 truncate">{event?.name}</p>
                         </div>
 
-                        <div className="flex items-center justify-center">
-                           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-                           <span className="ml-3 text-slate-400">Initializing payment...</span>
+                        <div className="flex items-center justify-center py-4">
+                           <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
+                           <span className="ml-2 text-slate-400 text-sm">Loading...</span>
                         </div>
                      </div>
                   )}

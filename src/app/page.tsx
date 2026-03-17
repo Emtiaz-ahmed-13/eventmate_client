@@ -3,6 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { EventServices } from "@/services/event.service";
+import { UserServices } from "@/services/user.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -37,6 +38,13 @@ export default function Home() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: hostsResponse, isLoading: isHostsLoading } = useQuery({
+    queryKey: ["hosts"],
+    queryFn: () => UserServices.getAllHosts(),
+    retry: 2,
+    staleTime: 5 * 60 * 1000,
+  });
+
   // Extract events array from response with proper fallback
   const events = React.useMemo(() => {
     if (!eventsResponse) return [];
@@ -56,6 +64,26 @@ export default function Home() {
     
     return [];
   }, [eventsResponse]);
+
+  // Extract hosts array from response with proper fallback
+  const hosts = React.useMemo(() => {
+    if (!hostsResponse) return [];
+    
+    // If response is already an array
+    if (Array.isArray(hostsResponse)) return hostsResponse;
+    
+    // If response has hosts property
+    if (hostsResponse.hosts && Array.isArray(hostsResponse.hosts)) {
+      return hostsResponse.hosts;
+    }
+    
+    // If response has data.hosts property
+    if (hostsResponse.data?.hosts && Array.isArray(hostsResponse.data.hosts)) {
+      return hostsResponse.data.hosts;
+    }
+    
+    return [];
+  }, [hostsResponse]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -187,7 +215,7 @@ export default function Home() {
             </div>
             <Link href="/events">
               <Button variant="link" className="font-black gap-2 group">
-                 View all events <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                 See More <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>
           </div>
@@ -200,7 +228,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {Array.isArray(events) ? events.slice(0, 6).map((event: any) => (
+              {Array.isArray(events) ? events.slice(0, 3).map((event: any) => (
                 <Card key={event.id} className="h-full flex flex-col group">
                   <div className="aspect-[16/10] relative overflow-hidden">
                     {event.image ? (
@@ -259,31 +287,72 @@ export default function Home() {
               <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter mb-4 uppercase">Architect <span className="text-accent">Nexus</span></h2>
               <p className="text-slate-500 font-medium italic">Meet the visionary hosts shaping the local ecosystem.</p>
             </div>
-            <Link href="/register?role=HOST">
-              <Button variant="white" className="rounded-2xl px-8 font-black uppercase tracking-widest text-[10px]">Become an Architect</Button>
-            </Link>
+            <div className="flex gap-4">
+              <Link href="/hosts">
+                <Button variant="link" className="font-black gap-2 group">
+                   See More <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <Link href="/register?role=HOST">
+                <Button variant="white" className="rounded-2xl px-8 font-black uppercase tracking-widest text-[10px]">Become an Architect</Button>
+              </Link>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { name: "Sophiya J.", role: "Culture Maven", stats: "42 Exp.", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop" },
-              { name: "Marcus V.", role: "Tech Visionary", stats: "28 Exp.", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop" },
-              { name: "Elena R.", role: "Art Curator", stats: "35 Exp.", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop" },
-              { name: "David K.", role: "Music Director", stats: "51 Exp.", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop" }
-            ].map((host, i) => (
-              <div key={i} className="group p-8 rounded-[2.5rem] bg-slate-900/40 border border-white/5 hover:border-primary/20 transition-all duration-500 text-center relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="w-24 h-24 rounded-[2rem] mx-auto mb-6 border-4 border-slate-800 overflow-hidden relative z-10 group-hover:scale-105 transition-transform">
-                  <img src={host.img} alt={host.name} className="w-full h-full object-cover" />
-                </div>
-                <h4 className="text-lg font-black text-white mb-1 relative z-10">{host.name}</h4>
-                <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-4 relative z-10">{host.role}</p>
-                <div className="flex items-center justify-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest relative z-10 pt-4 border-t border-white/5">
-                  <Star className="w-3 h-3 text-accent fill-accent" /> {host.stats}
-                </div>
-              </div>
-            ))}
-          </div>
+          {isHostsLoading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="bg-slate-900/40 animate-pulse h-[280px] rounded-[2.5rem] border border-white/5" />
+              ))}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {Array.isArray(hosts) && hosts.length > 0 ? hosts.slice(0, 4).map((host: any) => (
+                <Link key={host.id} href={`/profile/${host.id}`}>
+                  <div className="group p-8 rounded-[2.5rem] bg-slate-900/40 border border-white/5 hover:border-primary/20 transition-all duration-500 text-center relative overflow-hidden cursor-pointer">
+                    <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-24 h-24 rounded-[2rem] mx-auto mb-6 border-4 border-slate-800 overflow-hidden relative z-10 group-hover:scale-105 transition-transform">
+                      {host.profile?.profileImage ? (
+                        <img src={host.profile.profileImage} alt={host.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center text-primary font-black text-2xl">
+                          {host.name?.[0]}
+                        </div>
+                      )}
+                    </div>
+                    <h4 className="text-lg font-black text-white mb-1 relative z-10">{host.name}</h4>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-4 relative z-10">
+                      {host.profile?.bio ? host.profile.bio.slice(0, 20) + '...' : 'Event Architect'}
+                    </p>
+                    <div className="flex items-center justify-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest relative z-10 pt-4 border-t border-white/5">
+                      <Star className="w-3 h-3 text-accent fill-accent" /> 
+                      {host.hostedEvents?.length || 0} Events
+                    </div>
+                  </div>
+                </Link>
+              )) : (
+                // Fallback to mock data if no real hosts
+                [
+                  { name: "Sophiya J.", role: "Culture Maven", stats: "42 Exp.", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400&h=400&fit=crop" },
+                  { name: "Marcus V.", role: "Tech Visionary", stats: "28 Exp.", img: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&h=400&fit=crop" },
+                  { name: "Elena R.", role: "Art Curator", stats: "35 Exp.", img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=400&h=400&fit=crop" },
+                  { name: "David K.", role: "Music Director", stats: "51 Exp.", img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=400&h=400&fit=crop" }
+                ].map((host, i) => (
+                  <div key={i} className="group p-8 rounded-[2.5rem] bg-slate-900/40 border border-white/5 hover:border-primary/20 transition-all duration-500 text-center relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <div className="w-24 h-24 rounded-[2rem] mx-auto mb-6 border-4 border-slate-800 overflow-hidden relative z-10 group-hover:scale-105 transition-transform">
+                      <img src={host.img} alt={host.name} className="w-full h-full object-cover" />
+                    </div>
+                    <h4 className="text-lg font-black text-white mb-1 relative z-10">{host.name}</h4>
+                    <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-4 relative z-10">{host.role}</p>
+                    <div className="flex items-center justify-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest relative z-10 pt-4 border-t border-white/5">
+                      <Star className="w-3 h-3 text-accent fill-accent" /> {host.stats}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </section>
 

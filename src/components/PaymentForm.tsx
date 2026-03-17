@@ -66,24 +66,22 @@ export default function PaymentForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="p-6 bg-slate-800/50 rounded-xl border border-white/5">
-        <div className="flex items-center justify-between mb-4">
-          <span className="text-slate-400 font-medium">Event Fee</span>
-          <span className="text-2xl font-black text-white">${amount}</span>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="p-4 bg-slate-800/50 rounded-xl border border-white/5">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-slate-400 text-sm">Event Fee</span>
+          <span className="text-xl font-black text-white">${amount}</span>
         </div>
-        <div className="text-sm text-slate-500">
-          <p className="font-medium">{eventName}</p>
-        </div>
+        <p className="text-xs text-slate-500 truncate">{eventName}</p>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center gap-3 p-4 bg-slate-800/30 rounded-xl border border-white/5">
-          <CreditCard className="w-5 h-5 text-primary" />
-          <span className="text-white font-medium">Payment Details</span>
+      <div className="space-y-3">
+        <div className="flex items-center gap-2 p-3 bg-slate-800/30 rounded-xl border border-white/5">
+          <CreditCard className="w-4 h-4 text-primary" />
+          <span className="text-white text-sm font-medium">Payment Details</span>
         </div>
         
-        <div className="p-4 bg-slate-800/30 rounded-xl border border-white/5">
+        <div className="p-3 bg-slate-800/30 rounded-xl border border-white/5">
           <PaymentElement 
             options={{
               layout: "tabs"
@@ -96,12 +94,12 @@ export default function PaymentForm({
         type="submit"
         disabled={!stripe || isProcessing || isLoading}
         variant="glow"
-        className="w-full h-12 rounded-xl font-black uppercase tracking-[0.2em] text-xs"
+        className="w-full h-10 rounded-xl font-black uppercase tracking-[0.2em] text-xs"
       >
         {isProcessing ? (
           <>
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            Processing Payment...
+            <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+            Processing...
           </>
         ) : (
           `Pay $${amount}`

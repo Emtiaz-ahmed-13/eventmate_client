@@ -41,6 +41,11 @@ export const Navbar = () => {
               Create
            </Link>
         )}
+        {user?.role === "ADMIN" && (
+           <Link href="/admin" className="text-xs font-black uppercase tracking-widest text-primary hover:text-white transition-colors">
+              Admin
+           </Link>
+        )}
       </>
     );
 

@@ -3,6 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { Navbar } from "@/components/Navbar";
+import { Toaster } from "sonner";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -28,6 +29,7 @@ export default function RootLayout({
         <QueryProvider>
           <Navbar />
           {children}
+          <Toaster position="top-right" />
         </QueryProvider>
       </body>
     </html>

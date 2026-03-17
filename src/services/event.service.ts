@@ -25,4 +25,12 @@ export const EventServices = {
     const response = await api.delete(`/events/${eventId}/leave`);
     return response.data;
   },
+  saveEvent: async (eventId: string) => {
+    const response = await api.post(`/events/${eventId}/save`);
+    return response.data;
+  },
+  unsaveEvent: async (eventId: string) => {
+    const response = await api.delete(`/events/${eventId}/unsave`);
+    return response.data;
+  },
 };

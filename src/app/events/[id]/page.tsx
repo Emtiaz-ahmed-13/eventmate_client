@@ -1,7 +1,9 @@
 "use client";
 
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EventServices } from "@/services/event.service";
+import { PaymentServices } from "@/services/payment.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -10,24 +12,31 @@ import {
    ArrowLeft,
    Calendar,
    Clock,
-   DollarSign,
-   Heart,
    Info,
    MapPin,
    Share2,
    ShieldCheck,
    Users,
-   ChevronRight,
    Mail,
-   Plus
+   Plus,
+   CreditCard,
+   X,
+   Bookmark,
+   BookmarkCheck
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { toast } from "sonner";
+import StripeProvider from "@/components/providers/StripeProvider";
+import PaymentForm from "@/components/PaymentForm";
 
 export default function EventDetails() {
    const { id } = useParams();
    const { user, isAuthenticated } = useAuthStore();
    const queryClient = useQueryClient();
+   const [showPaymentModal, setShowPaymentModal] = useState(false);
+   const [clientSecret, setClientSecret] = useState<string | null>(null);
+   const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
 
    const { data: event, isLoading, error } = useQuery({
       queryKey: ["event", id],
@@ -39,13 +48,38 @@ export default function EventDetails() {
          if (!event?.id) throw new Error("Event ID not found");
          return EventServices.joinEvent(event.id);
       },
-      onSuccess: () => {
+      onSuccess: (data) => {
          queryClient.invalidateQueries({ queryKey: ["event", id] });
          queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+         
+         if (event?.approvalRequired) {
+            toast.success("Join request sent! Waiting for host approval.");
+         } else {
+            toast.success("Successfully joined the event!");
+         }
+         setShowPaymentModal(false);
+         setClientSecret(null);
+         setPaymentIntentId(null);
       },
       onError: (error: any) => {
          console.error("Failed to join event:", error);
-         // You can add toast notification here
+         toast.error(error.response?.data?.message || "Failed to join event");
+      },
+   });
+
+   const createPaymentIntentMutation = useMutation({
+      mutationFn: async () => {
+         if (!event?.id) throw new Error("Event ID not found");
+         return PaymentServices.createPaymentIntent(event.id, event.joiningFee);
+      },
+      onSuccess: (data) => {
+         setClientSecret(data.clientSecret);
+         setPaymentIntentId(data.paymentIntentId);
+      },
+      onError: (error: any) => {
+         console.error("Failed to create payment intent:", error);
+         toast.error(error.response?.data?.message || "Failed to initialize payment");
+         setShowPaymentModal(false);
       },
    });
 
@@ -57,12 +91,70 @@ export default function EventDetails() {
       onSuccess: () => {
          queryClient.invalidateQueries({ queryKey: ["event", id] });
          queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+         toast.success("Left the event successfully");
       },
       onError: (error: any) => {
          console.error("Failed to leave event:", error);
-         // You can add toast notification here
+         toast.error("Failed to leave event");
       },
    });
+
+   const saveMutation = useMutation({
+      mutationFn: async () => {
+         if (!event?.id) throw new Error("Event ID not found");
+         return EventServices.saveEvent(event.id);
+      },
+      onSuccess: () => {
+         queryClient.invalidateQueries({ queryKey: ["event", id] });
+         toast.success("Event saved!");
+      },
+      onError: (error: any) => {
+         console.error("Failed to save event:", error);
+         toast.error("Failed to save event");
+      },
+   });
+
+   const unsaveMutation = useMutation({
+      mutationFn: async () => {
+         if (!event?.id) throw new Error("Event ID not found");
+         return EventServices.unsaveEvent(event.id);
+      },
+      onSuccess: () => {
+         queryClient.invalidateQueries({ queryKey: ["event", id] });
+         toast.success("Event removed from saved");
+      },
+      onError: (error: any) => {
+         console.error("Failed to unsave event:", error);
+         toast.error("Failed to unsave event");
+      },
+   });
+
+   const handleJoinClick = () => {
+      if (event?.joiningFee > 0) {
+         setShowPaymentModal(true);
+         createPaymentIntentMutation.mutate();
+      } else {
+         joinMutation.mutate();
+      }
+   };
+
+   const handlePaymentSuccess = () => {
+      // For paid events, join after successful payment
+      joinMutation.mutate();
+   };
+
+   const handlePaymentError = (error: string) => {
+      toast.error(error);
+      setShowPaymentModal(false);
+      setClientSecret(null);
+      setPaymentIntentId(null);
+   };
+
+   const handleClosePaymentModal = () => {
+      setShowPaymentModal(false);
+      setClientSecret(null);
+      setPaymentIntentId(null);
+   };
 
    if (isLoading) {
       return (
@@ -77,27 +169,26 @@ export default function EventDetails() {
 
    if (!event) {
       return (
-         <>
-            <div className="min-h-screen flex items-center justify-center bg-background transform scale-x-[-1] blur-3xl opacity-20 -z-10 absolute inset-0" />
-            <div className="min-h-screen flex items-center justify-center bg-background">
-               <div className="text-center p-12 bg-slate-900/60 backdrop-blur-3xl rounded-[3rem] shadow-premium max-w-md border border-white/5">
-                  <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-white/5">
-                     <Info className="w-10 h-10 text-slate-500" />
-                  </div>
-                  <h2 className="text-3xl font-black text-white mb-2 tracking-tighter">Null Point Detected</h2>
-                  <p className="text-slate-400 mb-10 font-medium italic">This experience has been removed or archived from the ecosystem.</p>
-                  <Link href="/events">
-                     <Button variant="glow" size="lg" className="rounded-2xl px-10">Return to Nexus</Button>
-                  </Link>
+         <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="text-center p-12 bg-slate-900/60 backdrop-blur-3xl rounded-[3rem] shadow-premium max-w-md border border-white/5">
+               <div className="w-20 h-20 bg-slate-800 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-white/5">
+                  <Info className="w-10 h-10 text-slate-500" />
                </div>
+               <h2 className="text-3xl font-black text-white mb-2 tracking-tighter">Event Not Found</h2>
+               <p className="text-slate-400 mb-10 font-medium italic">This event has been removed or archived.</p>
+               <Link href="/events">
+                  <Button variant="glow" size="lg" className="rounded-2xl px-10">Return to Events</Button>
+               </Link>
             </div>
-         </>
+         </div>
       );
    }
 
    const isHost = user?.id === event.hostId;
    const isParticipant = event.participants?.some((p: any) => p.userId === user?.id);
+   const isSaved = event.savedBy?.some((s: any) => s.userId === user?.id);
    const isEventFull = (event.participants?.length || 0) >= event.maxParticipants;
+   const participantStatus = event.participants?.find((p: any) => p.userId === user?.id)?.status;
 
    return (
       <div className="min-h-screen bg-background pb-32">
@@ -116,14 +207,26 @@ export default function EventDetails() {
             
             <div className="absolute top-10 left-1/2 -translate-x-1/2 w-full max-w-7xl px-4 flex justify-between items-center z-10">
                <Link href="/events">
-                  <Button variant="white" size="sm" className="bg-white/10 backdrop-blur-xl border-white/10 text-white hover:bg-white hover:text-slate-900 rounded-2xl gap-2 font-black uppercase tracking-widest text-[10px] group border">
+                  <Button variant="outline" size="sm" className="bg-white/10 backdrop-blur-xl border-white/10 text-white hover:bg-white hover:text-slate-900 rounded-2xl gap-2 font-black uppercase tracking-widest text-[10px] group border">
                      <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
                      Back to events
                   </Button>
                </Link>
                <div className="flex gap-4">
-                  <Button variant="white" size="icon" className="bg-white/10 backdrop-blur-xl border-white/10 text-white rounded-2xl border"><Share2 className="w-4 h-4" /></Button>
-                  <Button variant="white" size="icon" className="bg-white/10 backdrop-blur-xl border-white/10 text-red-400 rounded-2xl border"><Heart className="w-4 h-4" /></Button>
+                  <Button variant="outline" size="icon" className="bg-white/10 backdrop-blur-xl border-white/10 text-white rounded-2xl border">
+                     <Share2 className="w-4 h-4" />
+                  </Button>
+                  {isAuthenticated && (
+                     <Button 
+                        variant="outline" 
+                        size="icon" 
+                        className="bg-white/10 backdrop-blur-xl border-white/10 text-white rounded-2xl border"
+                        onClick={() => isSaved ? unsaveMutation.mutate() : saveMutation.mutate()}
+                        disabled={saveMutation.isPending || unsaveMutation.isPending}
+                     >
+                        {isSaved ? <BookmarkCheck className="w-4 h-4 text-primary" /> : <Bookmark className="w-4 h-4" />}
+                     </Button>
+                  )}
                </div>
             </div>
 
@@ -159,7 +262,7 @@ export default function EventDetails() {
                      <CardHeader className="p-8 pb-4">
                         <CardTitle className="text-2xl font-black flex items-center gap-3 text-white">
                            <Info className="w-6 h-6 text-primary" />
-                           Briefing
+                           Event Details
                         </CardTitle>
                         <CardDescription className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Information for participants</CardDescription>
                      </CardHeader>
@@ -233,7 +336,7 @@ export default function EventDetails() {
                                  <MapPin className="w-5 h-5 text-primary" />
                               </div>
                               <div className="flex flex-col">
-                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Nexus Point</span>
+                                 <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Location</span>
                                  <span className="text-sm font-black text-white truncate max-w-[150px]">{event.location}</span>
                               </div>
                            </div>
@@ -251,17 +354,50 @@ export default function EventDetails() {
                               </div>
                            ) : isParticipant ? (
                               <div className="space-y-4">
-                                 <Button
-                                    onClick={() => leaveMutation.mutate()}
-                                    disabled={leaveMutation.isPending}
-                                    variant="ghost"
-                                    className="w-full h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-xs border-2 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all"
-                                 >
-                                    {leaveMutation.isPending ? "Processing..." : "Leave Event"}
-                                 </Button>
-                                 <div className="flex items-center justify-center gap-2 text-primary font-bold uppercase text-[9px] tracking-widest">
-                                    <ShieldCheck className="w-3.5 h-3.5" /> You're Registered
-                                 </div>
+                                 {participantStatus === 'PENDING' ? (
+                                    <div className="space-y-4">
+                                       <Button
+                                          disabled
+                                          className="w-full h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-xs bg-yellow-500/20 text-yellow-400 border border-yellow-500/20"
+                                       >
+                                          Awaiting Approval
+                                       </Button>
+                                       <Button
+                                          onClick={() => leaveMutation.mutate()}
+                                          disabled={leaveMutation.isPending}
+                                          variant="outline"
+                                          className="w-full h-12 rounded-xl font-black uppercase tracking-[0.2em] text-xs border border-red-500/20 text-red-400 hover:bg-red-500/10"
+                                       >
+                                          Cancel Request
+                                       </Button>
+                                    </div>
+                                 ) : participantStatus === 'APPROVED' ? (
+                                    <div className="space-y-4">
+                                       <Button
+                                          onClick={() => leaveMutation.mutate()}
+                                          disabled={leaveMutation.isPending}
+                                          variant="outline"
+                                          className="w-full h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-xs border-2 border-red-500/20 text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all"
+                                       >
+                                          {leaveMutation.isPending ? "Processing..." : "Leave Event"}
+                                       </Button>
+                                       <div className="flex items-center justify-center gap-2 text-primary font-bold uppercase text-[9px] tracking-widest">
+                                          <ShieldCheck className="w-3.5 h-3.5" /> You're Registered
+                                       </div>
+                                    </div>
+                                 ) : (
+                                    <div className="space-y-4">
+                                       <Button
+                                          disabled
+                                          className="w-full h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-xs bg-red-500/20 text-red-400 border border-red-500/20"
+                                       >
+                                          Request Rejected
+                                       </Button>
+                                       <div className="flex items-center justify-center gap-2 text-red-400 font-bold uppercase text-[9px] tracking-widest">
+                                          <X className="w-3.5 h-3.5" /> Access Denied
+                                       </div>
+                                    </div>
+                                 )}
                               </div>
                            ) : isEventFull ? (
                               <div className="space-y-4">
@@ -278,15 +414,18 @@ export default function EventDetails() {
                            ) : (
                               <div className="space-y-4">
                                  <Button
-                                    onClick={() => joinMutation.mutate()}
-                                    disabled={joinMutation.isPending}
+                                    onClick={handleJoinClick}
+                                    disabled={joinMutation.isPending || createPaymentIntentMutation.isPending}
                                     variant="glow"
                                     className="w-full h-16 rounded-2xl font-black uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
                                  >
-                                    {joinMutation.isPending ? "Joining..." : event.joiningFee > 0 ? `Join for $${event.joiningFee}` : "Join Free Event"}
+                                    {joinMutation.isPending || createPaymentIntentMutation.isPending ? "Processing..." : 
+                                     event.joiningFee > 0 ? `Join for $${event.joiningFee}` : 
+                                     event.approvalRequired ? "Request to Join" : "Join Free Event"}
                                  </Button>
                                  <div className="flex items-center justify-center gap-2 text-slate-400 font-bold uppercase text-[9px] tracking-widest">
-                                    <ShieldCheck className="w-3.5 h-3.5" /> Secure Registration
+                                    <ShieldCheck className="w-3.5 h-3.5" /> 
+                                    {event.approvalRequired ? "Host Approval Required" : "Secure Registration"}
                                  </div>
                               </div>
                            )
@@ -297,7 +436,7 @@ export default function EventDetails() {
                         )}
 
                         <div className="mt-12 pt-10 border-t border-white/5">
-                           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-6">Experience Architect</span>
+                           <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-6">Experience Host</span>
                            <div className="flex items-center gap-5">
                               <div className="w-16 h-16 rounded-2xl bg-white text-slate-900 flex items-center justify-center font-black text-2xl shadow-xl shadow-white/5">
                                  {event.host?.name?.[0] || "H"}
@@ -309,30 +448,73 @@ export default function EventDetails() {
                                     VERIFIED PRO
                                  </div>
                               </div>
-                              <Button variant="ghost" size="icon" className="text-slate-200 hover:text-primary transition-colors">
+                              <Button variant="outline" size="icon" className="text-slate-200 hover:text-primary transition-colors border-white/10">
                                  <Mail className="w-5 h-5" />
                               </Button>
                            </div>
                         </div>
                      </CardContent>
                   </Card>
-
-                  <Card className="bg-slate-900 border-none p-8 text-white relative overflow-hidden group cursor-pointer">
-                     <div className="relative z-10">
-                        <div className="flex items-center gap-2 mb-4">
-                           <ShieldCheck className="w-6 h-6 text-primary" />
-                           <span className="text-[10px] font-black uppercase tracking-widest text-primary">Protocol Secured</span>
-                        </div>
-                        <h4 className="text-lg font-black mb-2 flex items-center justify-between">
-                           Safety Guarantee <ChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0" />
-                        </h4>
-                        <p className="text-xs text-slate-500 font-bold leading-relaxed uppercase tracking-wider">Verified hosts and professional oversight for every ecosystem moment.</p>
-                     </div>
-                     <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-[60px]" />
-                  </Card>
                </aside>
             </div>
          </div>
+
+         {/* Payment Modal */}
+         {showPaymentModal && (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+               <div className="bg-slate-900/90 backdrop-blur-xl rounded-[2rem] border border-white/10 p-8 max-w-md w-full">
+                  <div className="flex items-center justify-between mb-6">
+                     <h3 className="text-2xl font-black text-white">Payment Required</h3>
+                     <Button 
+                        variant="outline" 
+                        size="icon" 
+                        onClick={handleClosePaymentModal}
+                        className="text-slate-400 hover:text-white border-white/10"
+                     >
+                        <X className="w-5 h-5" />
+                     </Button>
+                  </div>
+                  
+                  {event?.approvalRequired && (
+                     <div className="mb-6 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
+                        <p className="text-yellow-400 text-sm font-medium">
+                           ⚠️ Payment will be processed after host approval
+                        </p>
+                     </div>
+                  )}
+
+                  {clientSecret ? (
+                     <StripeProvider clientSecret={clientSecret}>
+                        <PaymentForm
+                           onSuccess={handlePaymentSuccess}
+                           onError={handlePaymentError}
+                           amount={event?.joiningFee || 0}
+                           eventName={event?.name || ""}
+                           isLoading={joinMutation.isPending}
+                        />
+                     </StripeProvider>
+                  ) : (
+                     <div className="space-y-6">
+                        <div className="p-6 bg-slate-800/50 rounded-xl border border-white/5">
+                           <div className="flex items-center justify-between mb-4">
+                              <span className="text-slate-400 font-medium">Event Fee</span>
+                              <span className="text-2xl font-black text-white">${event?.joiningFee}</span>
+                           </div>
+                           <div className="text-sm text-slate-500">
+                              <p className="font-medium">{event?.name}</p>
+                              <p>{new Date(event?.dateTime).toLocaleDateString()}</p>
+                           </div>
+                        </div>
+
+                        <div className="flex items-center justify-center">
+                           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                           <span className="ml-3 text-slate-400">Initializing payment...</span>
+                        </div>
+                     </div>
+                  )}
+               </div>
+            </div>
+         )}
       </div>
    );
 }

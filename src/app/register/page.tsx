@@ -3,11 +3,13 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { AuthServices } from "@/services/auth.service";
+
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, Suspense } from "react";
+import { toast } from "sonner";
+import { AuthServices } from "@/services/auth.service";
 
 const registerSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -18,12 +20,11 @@ const registerSchema = z.object({
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-export default function RegisterPage() {
+function RegisterContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialRole = (searchParams.get("role") as "USER" | "HOST") || "USER";
 
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const {
@@ -36,33 +37,25 @@ export default function RegisterPage() {
     resolver: zodResolver(registerSchema),
     defaultValues: {
       role: initialRole,
-    }
+    },
   });
 
   const selectedRole = watch("role");
 
   const onSubmit = async (data: RegisterFormValues) => {
     setLoading(true);
-    setError(null);
     try {
-      console.log("Submitting registration data:", data);
       const response = await AuthServices.register(data);
-      console.log("Registration response:", response);
-      
       if (response.success) {
-        router.push("/login?registered=true");
-      } else {
-        setError(response.message || "Registration failed");
+        toast.success("Registration successful! Please check your email.");
+        router.push(`/verify-email-sent?email=${encodeURIComponent(data.email)}`);
       }
     } catch (err: any) {
-      console.error("Registration error:", err);
-      console.error("Error response:", err.response?.data);
-      
-      const errorMessage = err.response?.data?.message || 
-                          err.response?.data?.error || 
-                          err.message || 
-                          "Something went wrong. Please try again.";
-      setError(errorMessage);
+      const errorMessage =
+        err.response?.data?.message ||
+        err.message ||
+        "Something went wrong. Please try again.";
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -76,16 +69,19 @@ export default function RegisterPage() {
 
       <div className="max-w-md w-full space-y-10 p-12 bg-slate-900/40 backdrop-blur-3xl rounded-[3rem] shadow-premium border border-white/5 relative z-10 box-glow">
         <div className="text-center">
-          <Link href="/" className="text-4xl font-black text-white tracking-tighter hover:text-primary transition-colors">Event<span className="text-primary glow-emerald">Mate</span></Link>
-          <h2 className="mt-8 text-3xl font-black text-white tracking-tight">Establish Identity</h2>
-          <p className="mt-2 text-xs font-black text-slate-500 uppercase tracking-[0.2em] italic">Join the nexus ecosystem</p>
+          <Link
+            href="/"
+            className="text-4xl font-black text-white tracking-tighter hover:text-primary transition-colors"
+          >
+            Event<span className="text-primary glow-emerald">Mate</span>
+          </Link>
+          <h2 className="mt-8 text-3xl font-black text-white tracking-tight">
+            Establish Identity
+          </h2>
+          <p className="mt-2 text-xs font-black text-slate-500 uppercase tracking-[0.2em] italic">
+            Join the nexus ecosystem
+          </p>
         </div>
-
-        {error && (
-          <div className="p-4 bg-red-900/20 border border-red-500/20 text-red-400 text-[10px] rounded-2xl font-black uppercase tracking-widest text-center">
-            {error}
-          </div>
-        )}
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
           <div className="space-y-6">
@@ -95,8 +91,8 @@ export default function RegisterPage() {
                 type="button"
                 onClick={() => setValue("role", "USER")}
                 className={`flex-1 py-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-[0.2em] ${
-                  selectedRole === "USER" 
-                    ? "bg-slate-800 text-primary shadow-lg border border-white/5" 
+                  selectedRole === "USER"
+                    ? "bg-slate-800 text-primary shadow-lg border border-white/5"
                     : "text-slate-600 hover:text-slate-400"
                 }`}
               >
@@ -106,8 +102,8 @@ export default function RegisterPage() {
                 type="button"
                 onClick={() => setValue("role", "HOST")}
                 className={`flex-1 py-3 text-[10px] font-black rounded-xl transition-all uppercase tracking-[0.2em] ${
-                  selectedRole === "HOST" 
-                    ? "bg-primary text-slate-900 shadow-xl shadow-primary/20" 
+                  selectedRole === "HOST"
+                    ? "bg-primary text-slate-900 shadow-xl shadow-primary/20"
                     : "text-slate-600 hover:text-slate-400"
                 }`}
               >
@@ -116,56 +112,91 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Identity Name</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">
+                Identity Name
+              </label>
               <input
                 {...register("name")}
                 type="text"
                 className="w-full px-6 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-slate-700 font-medium"
                 placeholder="John Doe"
               />
-              {errors.name && <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">{errors.name.message}</p>}
+              {errors.name && (
+                <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">
+                  {errors.name.message}
+                </p>
+              )}
             </div>
+
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Email Protocol</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">
+                Email Protocol
+              </label>
               <input
                 {...register("email")}
                 type="email"
                 className="w-full px-6 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-slate-700 font-medium"
                 placeholder="you@nexus.com"
               />
-              {errors.email && <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">{errors.email.message}</p>}
+              {errors.email && (
+                <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">
+                  {errors.email.message}
+                </p>
+              )}
             </div>
+
             <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Secure Key</label>
+              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">
+                Secure Key
+              </label>
               <input
                 {...register("password")}
                 type="password"
                 className="w-full px-6 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-slate-700 font-medium"
                 placeholder="••••••••"
               />
-              {errors.password && <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">{errors.password.message}</p>}
+              {errors.password && (
+                <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">
+                  {errors.password.message}
+                </p>
+              )}
             </div>
           </div>
 
-          <div>
-            <Button
-              type="submit"
-              disabled={loading}
-              variant="glow"
-              className="w-full h-14 font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl transition-all active:scale-[0.98]"
-            >
-              {loading ? "Establishing..." : `Sync as ${selectedRole === 'USER' ? 'Participant' : 'Architect'}`}
-            </Button>
-          </div>
+          <Button
+            type="submit"
+            disabled={loading}
+            variant="glow"
+            className="w-full h-14 font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl transition-all active:scale-[0.98]"
+          >
+            {loading
+              ? "Establishing..."
+              : `Sync as ${selectedRole === "USER" ? "Participant" : "Architect"}`}
+          </Button>
         </form>
 
         <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
           Already synced?{" "}
-          <Link href="/login" className="text-primary hover:text-white transition-colors">
+          <Link
+            href="/login"
+            className="text-primary hover:text-white transition-colors"
+          >
             Access Session
           </Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+      </div>
+    }>
+      <RegisterContent />
+    </Suspense>
   );
 }

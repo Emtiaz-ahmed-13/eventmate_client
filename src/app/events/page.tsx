@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { EventServices } from "@/services/event.service";
 import { useState } from "react";
@@ -34,13 +35,43 @@ export default function EventsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
-  const { data: events, isLoading, error } = useQuery({
+  const { data: eventsResponse, isLoading, error } = useQuery({
     queryKey: ["events", searchTerm, selectedCategory],
-    queryFn: () => EventServices.getAllEvents({ 
-       searchTerm: searchTerm || undefined, 
-       type: selectedCategory || undefined 
-    }),
+    queryFn: async () => {
+      try {
+        const response = await EventServices.getAllEvents({ 
+          searchTerm: searchTerm || undefined, 
+          type: selectedCategory || undefined 
+        });
+        return response;
+      } catch (error) {
+        console.error('Error fetching events:', error);
+        throw error;
+      }
+    },
+    retry: 2,
+    staleTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  // Extract events array from response with proper fallback
+  const events = React.useMemo(() => {
+    if (!eventsResponse) return [];
+    
+    // If response is already an array
+    if (Array.isArray(eventsResponse)) return eventsResponse;
+    
+    // If response has events property
+    if (eventsResponse.events && Array.isArray(eventsResponse.events)) {
+      return eventsResponse.events;
+    }
+    
+    // If response has data.events property
+    if (eventsResponse.data?.events && Array.isArray(eventsResponse.data.events)) {
+      return eventsResponse.data.events;
+    }
+    
+    return [];
+  }, [eventsResponse]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -141,9 +172,24 @@ export default function EventsPage() {
 
                {isLoading ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     {[1, 2, 3, 4].map(i => <div key={i} className="h-96 bg-white animate-pulse rounded-3xl" />)}
+                     {[1, 2, 3, 4].map(i => (
+                        <div key={i} className="h-96 bg-slate-800/30 animate-pulse rounded-[2.5rem] border border-white/5" />
+                     ))}
                   </div>
-               ) : events?.length === 0 ? (
+               ) : error ? (
+                  <div className="text-center py-24 bg-slate-900/20 rounded-[3rem] border-2 border-dashed border-red-500/20">
+                     <div className="w-20 h-20 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-red-400">
+                        <Filter className="w-10 h-10" />
+                     </div>
+                     <h3 className="text-2xl font-black text-white mb-2 tracking-tighter">Failed to load events</h3>
+                     <p className="text-slate-500 mb-10 max-w-sm mx-auto font-medium">
+                        There was an error loading events. Please try again.
+                     </p>
+                     <Button variant="glow" onClick={() => window.location.reload()}>
+                        Retry
+                     </Button>
+                  </div>
+               ) : !events || events.length === 0 ? (
                   <div className="text-center py-24 bg-slate-900/20 rounded-[3rem] border-2 border-dashed border-white/5">
                      <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-600 shadow-sm border border-white/5">
                         <Filter className="w-10 h-10" />
@@ -154,7 +200,7 @@ export default function EventsPage() {
                   </div>
                ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     {events?.map((event: any) => (
+                     {events && Array.isArray(events) && events.map((event: any) => (
                         <div key={event.id} className="group bg-slate-900/40 backdrop-blur-xl rounded-[2.5rem] shadow-2xl border border-white/5 hover:border-primary/20 hover:shadow-primary/5 transition-all duration-500 overflow-hidden flex flex-col relative">
                            <div className="aspect-[16/9] bg-slate-800 relative overflow-hidden">
                               <div className="absolute inset-0 bg-slate-900 group-hover:scale-110 transition-transform duration-700 flex items-center justify-center text-slate-700 text-lg font-black uppercase tracking-widest italic opacity-40">

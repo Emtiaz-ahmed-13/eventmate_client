@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { EventServices } from "@/services/event.service";
 import { useAuthStore } from "@/store/auth.store";
@@ -29,10 +30,32 @@ import {
 export default function Home() {
   const { isAuthenticated } = useAuthStore();
 
-  const { data: events, isLoading, error } = useQuery({
+  const { data: eventsResponse, isLoading, error } = useQuery({
     queryKey: ["events"],
     queryFn: () => EventServices.getAllEvents(),
+    retry: 2,
+    staleTime: 5 * 60 * 1000,
   });
+
+  // Extract events array from response with proper fallback
+  const events = React.useMemo(() => {
+    if (!eventsResponse) return [];
+    
+    // If response is already an array
+    if (Array.isArray(eventsResponse)) return eventsResponse;
+    
+    // If response has events property
+    if (eventsResponse.events && Array.isArray(eventsResponse.events)) {
+      return eventsResponse.events;
+    }
+    
+    // If response has data.events property
+    if (eventsResponse.data?.events && Array.isArray(eventsResponse.data.events)) {
+      return eventsResponse.data.events;
+    }
+    
+    return [];
+  }, [eventsResponse]);
 
   return (
     <div className="min-h-screen bg-background">

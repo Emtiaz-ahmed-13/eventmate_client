@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -43,7 +44,21 @@ export default function LoginPage() {
         setError(response.message || "Login failed");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Something went wrong. Please try again.");
+      const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
+      
+      // Check if it's an email verification error
+      if (errorMessage.toLowerCase().includes('verify') || errorMessage.toLowerCase().includes('email')) {
+        setError("Please verify your email before logging in.");
+        toast.error("Email not verified. Redirecting to verification page...", {
+          duration: 3000,
+        });
+        // Redirect to verification page after 3 seconds
+        setTimeout(() => {
+          router.push(`/verify-email-sent?email=${encodeURIComponent(data.email)}`);
+        }, 3000);
+      } else {
+        setError(errorMessage);
+      }
     } finally {
       setLoading(false);
     }
@@ -89,6 +104,15 @@ export default function LoginPage() {
                 placeholder="••••••••"
               />
               {errors.password && <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">{errors.password.message}</p>}
+            </div>
+            
+            <div className="text-right">
+              <Link 
+                href="/forgot-password" 
+                className="text-[10px] font-black text-slate-400 hover:text-primary transition-colors uppercase tracking-[0.2em]"
+              >
+                Forgot Key?
+              </Link>
             </div>
           </div>
 

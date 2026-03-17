@@ -36,6 +36,9 @@ export const Navbar = () => {
         <Link href="/dashboard" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
           Dashboard
         </Link>
+        <Link href="/saved" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
+          Saved
+        </Link>
         {user?.role === "HOST" && (
            <Link href="/events/create" className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-white transition-colors">
               Create

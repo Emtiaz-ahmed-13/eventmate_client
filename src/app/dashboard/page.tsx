@@ -1,14 +1,14 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { EventServices } from "@/services/event.service";
 import { UserServices } from "@/services/user.service";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { toast } from "sonner";
 import { 
   Users, 
   Calendar, 
@@ -16,19 +16,64 @@ import {
   ArrowUpRight, 
   Plus, 
   Search,
-  Settings,
-  MoreVertical,
   Layers,
   BarChart3,
   Clock,
   MapPin,
-  TrendingUp,
   LayoutDashboard,
-  ArrowRight
+  ArrowRight,
+  Edit,
+  Trash2,
+  XCircle,
+  CheckCircle,
+  UserX,
+  ChevronDown,
+  ChevronUp,
+  Bookmark
 } from "lucide-react";
 
 export default function Dashboard() {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+  const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+
+  const deleteMutation = useMutation({
+    mutationFn: (eventId: string) => EventServices.deleteEvent(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+      toast.success("Event deleted");
+    },
+    onError: () => toast.error("Failed to delete event"),
+  });
+
+  const cancelMutation = useMutation({
+    mutationFn: (eventId: string) => EventServices.cancelEvent(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+      toast.success("Event cancelled");
+    },
+    onError: () => toast.error("Failed to cancel event"),
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) =>
+      EventServices.approveParticipant(eventId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+      toast.success("Participant approved");
+    },
+    onError: () => toast.error("Failed to approve participant"),
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) =>
+      EventServices.rejectParticipant(eventId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+      toast.success("Participant rejected");
+    },
+    onError: () => toast.error("Failed to reject participant"),
+  });
 
   const { data: userEventsResponse, isLoading: isEventsLoading } = useQuery({
     queryKey: ["dashboard-events", user?.id],
@@ -80,8 +125,8 @@ export default function Dashboard() {
           },
           { 
             label: "Saved Events", 
-            value: "0", 
-            icon: <ShieldCheck className="w-5 h-5 text-emerald-400" />,
+            value: <Link href="/saved" className="hover:text-primary transition-colors">View →</Link>, 
+            icon: <Bookmark className="w-5 h-5 text-emerald-400" />,
             description: "Bookmarked experiences"
           },
           { 
@@ -308,56 +353,147 @@ export default function Dashboard() {
           </div>
         ) : (
           <div className="space-y-4">
-            {userEvents.hosted.map((event: any) => (
-              <div key={event.id} className="group p-6 rounded-[2rem] bg-slate-800/30 border border-white/5 hover:border-primary/20 hover:bg-slate-800/50 transition-all flex flex-col md:flex-row md:items-center gap-6">
-                <div className="w-16 h-16 rounded-xl bg-slate-800/50 flex items-center justify-center font-black text-primary overflow-hidden border border-white/5 shrink-0">
-                  {event.image ? (
-                    <img src={event.image} alt={event.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
-                  ) : (
-                    <span className="text-xl">{event.type[0]}</span>
+            {userEvents.hosted.map((event: any) => {
+              const pendingParticipants = event.participants?.filter((p: any) => p.status === "PENDING") || [];
+              const approvedParticipants = event.participants?.filter((p: any) => p.status === "APPROVED") || [];
+              const isExpanded = expandedEvent === event.id;
+              return (
+                <div key={event.id} className="rounded-[2rem] bg-slate-800/30 border border-white/5 hover:border-primary/20 transition-all overflow-hidden">
+                  <div className="p-6 flex flex-col md:flex-row md:items-center gap-6">
+                    <div className="w-16 h-16 rounded-xl bg-slate-800/50 flex items-center justify-center font-black text-primary overflow-hidden border border-white/5 shrink-0">
+                      {event.image ? (
+                        <img src={event.image} alt={event.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-xl">{event.type[0]}</span>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <Badge variant="emerald" className="uppercase tracking-widest text-[9px] font-black bg-primary/10 text-primary border-primary/20">
+                          {event.type}
+                        </Badge>
+                        {event.status === "CANCELLED" ? (
+                          <Badge className="bg-red-500/10 text-red-400 border-red-500/20 text-[9px] font-black uppercase">Cancelled</Badge>
+                        ) : (
+                          <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">
+                            <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" /> LIVE
+                          </span>
+                        )}
+                        {pendingParticipants.length > 0 && (
+                          <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 text-[9px] font-black uppercase">
+                            {pendingParticipants.length} Pending
+                          </Badge>
+                        )}
+                      </div>
+                      <h4 className="font-black text-white text-lg mb-2 leading-tight">{event.name}</h4>
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">
+                        <span className="flex items-center gap-2"><Calendar className="w-3.5 h-3.5" />{new Date(event.dateTime).toLocaleDateString()}</span>
+                        <span className="flex items-center gap-2"><Users className="w-3.5 h-3.5" />{approvedParticipants.length}/{event.maxParticipants} Participants</span>
+                        <span className="flex items-center gap-2"><MapPin className="w-3.5 h-3.5" />{event.location}</span>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 flex-wrap">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl border-white/10 hover:bg-primary/10 hover:border-primary/20 hover:text-primary"
+                        onClick={() => setExpandedEvent(isExpanded ? null : event.id)}
+                        title="Manage participants"
+                      >
+                        {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                      </Button>
+                      <Link href={`/events/${event.id}/edit`}>
+                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-white/10 hover:bg-blue-500/10 hover:border-blue-500/20 hover:text-blue-400" title="Edit event">
+                          <Edit className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      {event.status !== "CANCELLED" && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-10 w-10 rounded-xl border-yellow-500/20 text-yellow-400 hover:bg-yellow-500/10"
+                          title="Cancel event"
+                          onClick={() => { if (confirm("Cancel this event?")) cancelMutation.mutate(event.id); }}
+                          disabled={cancelMutation.isPending}
+                        >
+                          <XCircle className="w-4 h-4" />
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl border-red-500/20 text-red-400 hover:bg-red-500/10"
+                        title="Delete event"
+                        onClick={() => { if (confirm("Delete this event permanently?")) deleteMutation.mutate(event.id); }}
+                        disabled={deleteMutation.isPending}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                      <Link href={`/events/${event.id}`}>
+                        <Button variant="outline" className="border-white/10 text-white hover:bg-white/5 rounded-xl font-black text-xs uppercase tracking-[0.3em] group h-10">
+                          View <ArrowRight className="w-3.5 h-3.5 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+
+                  {/* Participant Management Panel */}
+                  {isExpanded && (
+                    <div className="border-t border-white/5 p-6 bg-slate-900/40">
+                      <h5 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-4">Participant Management</h5>
+                      {event.participants?.length === 0 ? (
+                        <p className="text-slate-500 text-sm font-medium italic">No participants yet.</p>
+                      ) : (
+                        <div className="space-y-3">
+                          {event.participants?.map((p: any) => (
+                            <div key={p.userId} className="flex items-center justify-between p-4 bg-slate-800/30 rounded-2xl border border-white/5">
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center font-black text-slate-300 text-sm">
+                                  {p.user?.name?.[0] || "U"}
+                                </div>
+                                <div>
+                                  <p className="text-sm font-black text-white">{p.user?.name || "Unknown"}</p>
+                                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{p.user?.email}</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {p.status === "PENDING" ? (
+                                  <>
+                                    <Badge className="bg-yellow-500/10 text-yellow-400 border-yellow-500/20 text-[9px] font-black uppercase">Pending</Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-8 rounded-xl border-primary/20 text-primary hover:bg-primary/10 font-black text-[10px] uppercase tracking-widest"
+                                      onClick={() => approveMutation.mutate({ eventId: event.id, userId: p.userId })}
+                                      disabled={approveMutation.isPending}
+                                    >
+                                      <CheckCircle className="w-3.5 h-3.5 mr-1" /> Approve
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-8 rounded-xl border-red-500/20 text-red-400 hover:bg-red-500/10 font-black text-[10px] uppercase tracking-widest"
+                                      onClick={() => rejectMutation.mutate({ eventId: event.id, userId: p.userId })}
+                                      disabled={rejectMutation.isPending}
+                                    >
+                                      <UserX className="w-3.5 h-3.5 mr-1" /> Reject
+                                    </Button>
+                                  </>
+                                ) : p.status === "APPROVED" ? (
+                                  <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase">Approved</Badge>
+                                ) : (
+                                  <Badge className="bg-red-500/10 text-red-400 border-red-500/20 text-[9px] font-black uppercase">Rejected</Badge>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <Badge variant="emerald" className="uppercase tracking-widest text-[9px] font-black bg-primary/10 text-primary border-primary/20">
-                      {event.type}
-                    </Badge>
-                    <span className="flex items-center gap-1.5 text-[10px] font-black text-emerald-400 uppercase tracking-[0.2em]">
-                      <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" /> 
-                      LIVE
-                    </span>
-                  </div>
-                  <h4 className="font-black text-white text-lg mb-2 group-hover:text-primary transition-colors leading-tight">
-                    {event.name}
-                  </h4>
-                  <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-bold text-slate-500 uppercase tracking-[0.2em]">
-                    <span className="flex items-center gap-2">
-                      <Calendar className="w-3.5 h-3.5" /> 
-                      {new Date(event.dateTime).toLocaleDateString()}
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <Users className="w-3.5 h-3.5" /> 
-                      0 PARTICIPANTS
-                    </span>
-                    <span className="flex items-center gap-2">
-                      <MapPin className="w-3.5 h-3.5" /> 
-                      {event.location}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-white/10 hover:bg-white/5">
-                    <Settings className="w-4 h-4 text-slate-400" />
-                  </Button>
-                  <Link href={`/events/${event.id}`}>
-                    <Button variant="outline" className="border-white/10 text-white hover:bg-white/5 rounded-xl font-black text-xs uppercase tracking-[0.3em] group">
-                      Manage 
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

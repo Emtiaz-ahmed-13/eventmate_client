@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { EventServices } from "@/services/event.service";
 import { PaymentServices } from "@/services/payment.service";
+import { ReviewServices } from "@/services/review.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -19,10 +20,10 @@ import {
    Users,
    Mail,
    Plus,
-   CreditCard,
    X,
    Bookmark,
-   BookmarkCheck
+   BookmarkCheck,
+   Star
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -37,6 +38,8 @@ export default function EventDetails() {
    const [showPaymentModal, setShowPaymentModal] = useState(false);
    const [clientSecret, setClientSecret] = useState<string | null>(null);
    const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
+   const [showReviewForm, setShowReviewForm] = useState(false);
 
    const { data: event, isLoading, error } = useQuery({
       queryKey: ["event", id],
@@ -126,6 +129,24 @@ export default function EventDetails() {
       onError: (error: any) => {
          console.error("Failed to unsave event:", error);
          toast.error("Failed to unsave event");
+      },
+   });
+
+   const reviewMutation = useMutation({
+      mutationFn: (data: { rating: number; comment: string }) =>
+         ReviewServices.createReview({
+            hostId: event?.hostId,
+            eventId: event?.id,
+            rating: data.rating,
+            comment: data.comment,
+         }),
+      onSuccess: () => {
+         toast.success("Review submitted!");
+         setShowReviewForm(false);
+         setReviewForm({ rating: 5, comment: "" });
+      },
+      onError: (error: any) => {
+         toast.error(error.response?.data?.message || "Failed to submit review");
       },
    });
 
@@ -306,6 +327,70 @@ export default function EventDetails() {
                         </div>
                      </CardContent>
                   </Card>
+
+                  {/* Review Form — shown to approved participants */}
+                  {isAuthenticated && !isHost && participantStatus === "APPROVED" && (
+                     <Card className="border border-white/5 shadow-premium bg-slate-900/40 backdrop-blur-xl p-2">
+                        <CardHeader className="p-8 pb-4">
+                           <CardTitle className="text-2xl font-black flex items-center gap-3 text-white">
+                              <Star className="w-6 h-6 text-primary" />
+                              Leave a Review
+                           </CardTitle>
+                           <CardDescription className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Rate your experience with the host</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-8 pt-4">
+                           {!showReviewForm ? (
+                              <Button
+                                 variant="outline"
+                                 className="border-primary/20 text-primary hover:bg-primary/10 rounded-2xl font-black uppercase tracking-widest text-xs"
+                                 onClick={() => setShowReviewForm(true)}
+                              >
+                                 <Star className="w-4 h-4 mr-2" />
+                                 Write a Review
+                              </Button>
+                           ) : (
+                              <div className="space-y-6">
+                                 <div>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 block">Rating</label>
+                                    <div className="flex gap-2">
+                                       {[1, 2, 3, 4, 5].map((star) => (
+                                          <button key={star} onClick={() => setReviewForm((p) => ({ ...p, rating: star }))} className="transition-transform hover:scale-110">
+                                             <Star className={`w-8 h-8 ${star <= reviewForm.rating ? "text-yellow-400 fill-yellow-400" : "text-slate-700"}`} />
+                                          </button>
+                                       ))}
+                                    </div>
+                                 </div>
+                                 <div>
+                                    <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-3 block">Comment</label>
+                                    <textarea
+                                       value={reviewForm.comment}
+                                       onChange={(e) => setReviewForm((p) => ({ ...p, comment: e.target.value }))}
+                                       className="w-full h-28 px-5 py-4 bg-slate-800/40 border border-white/5 rounded-2xl text-white text-sm focus:border-primary/30 focus:outline-none placeholder:text-slate-600 font-medium resize-none"
+                                       placeholder="Share your experience..."
+                                    />
+                                 </div>
+                                 <div className="flex gap-3">
+                                    <Button
+                                       variant="glow"
+                                       className="rounded-2xl font-black uppercase tracking-widest text-xs px-8"
+                                       onClick={() => reviewMutation.mutate(reviewForm)}
+                                       disabled={reviewMutation.isPending}
+                                    >
+                                       {reviewMutation.isPending ? "Submitting..." : "Submit Review"}
+                                    </Button>
+                                    <Button
+                                       variant="outline"
+                                       className="rounded-2xl font-black uppercase tracking-widest text-xs border-white/10 text-white hover:bg-white/5"
+                                       onClick={() => setShowReviewForm(false)}
+                                    >
+                                       Cancel
+                                    </Button>
+                                 </div>
+                              </div>
+                           )}
+                        </CardContent>
+                     </Card>
+                  )}
                </div>
 
                {/* Action Sidebar */}

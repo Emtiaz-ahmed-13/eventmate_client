@@ -4,6 +4,7 @@ import React, { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
 import { UserServices } from "@/services/user.service";
+import { ReviewServices } from "@/services/review.service";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,8 +28,10 @@ import {
   X,
   Camera,
   Upload,
-  Plus
+  Plus,
+  Star
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function ProfilePage() {
   const params = useParams();
@@ -73,6 +76,12 @@ export default function ProfilePage() {
     enabled: !!profile && !!id && id !== "undefined",
   });
 
+  const { data: reviews, isLoading: isReviewsLoading } = useQuery({
+    queryKey: ["host-reviews", id],
+    queryFn: () => ReviewServices.getHostReviews(id),
+    enabled: !!id && id !== "undefined",
+  });
+
   // Update profile mutation
   const updateProfileMutation = useMutation({
     mutationFn: (data: any) => UserServices.updateProfile(data),
@@ -80,13 +89,9 @@ export default function ProfilePage() {
       queryClient.invalidateQueries({ queryKey: ["user", id] });
       setIsEditingProfile(false);
       setIsEditingHeader(false);
-      // You can add a toast notification here
-      console.log("Profile updated successfully!");
+      toast.success("Profile updated!");
     },
-    onError: (error) => {
-      console.error("Failed to update profile:", error);
-      // You can add an error toast notification here
-    }
+    onError: () => toast.error("Failed to update profile"),
   });
 
   // Update profile image mutation
@@ -94,11 +99,9 @@ export default function ProfilePage() {
     mutationFn: (file: File) => UserServices.updateProfileImage(file),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["user", id] });
-      console.log("Profile image updated successfully!");
+      toast.success("Profile photo updated!");
     },
-    onError: (error) => {
-      console.error("Failed to update profile image:", error);
-    }
+    onError: () => toast.error("Failed to update profile photo"),
   });
 
   // Update edit form when profile changes
@@ -423,7 +426,11 @@ export default function ProfilePage() {
                 <div className="w-px h-12 bg-white/5 hidden md:block" />
                 <div className="flex flex-col">
                    <div className="flex items-center gap-2">
-                      <span className="text-3xl font-black text-white tracking-tighter">4.9</span>
+                      <span className="text-3xl font-black text-white tracking-tighter">
+                        {reviews && reviews.length > 0
+                          ? (reviews.reduce((sum: number, r: any) => sum + r.rating, 0) / reviews.length).toFixed(1)
+                          : "—"}
+                      </span>
                       <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(16,185,129,1)]" />
                    </div>
                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-1">Host Authority</span>
@@ -580,6 +587,68 @@ export default function ProfilePage() {
                    </div>
                 )}
              </CardContent>
+          </Card>
+
+          {/* Reviews Section */}
+          <Card className="bg-slate-900/40 backdrop-blur-xl border-white/5 rounded-[2.5rem] p-4 shadow-premium">
+            <CardHeader className="px-10 py-10 pb-4">
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle className="text-2xl font-black text-white flex items-center gap-3">
+                    <Star className="w-6 h-6 text-primary" />
+                    Host Reviews
+                  </CardTitle>
+                  <CardDescription className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                    Community feedback
+                  </CardDescription>
+                </div>
+                {reviews && reviews.length > 0 && (
+                  <Badge variant="emerald" className="bg-primary/20 text-primary border-none px-4 py-2 font-black text-[10px] uppercase tracking-widest">
+                    {(reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1)} avg
+                  </Badge>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="px-10 py-10 pt-4">
+              {isReviewsLoading ? (
+                <div className="text-center py-10">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-primary mx-auto" />
+                </div>
+              ) : !reviews || reviews.length === 0 ? (
+                <div className="text-center py-12 border-2 border-dashed rounded-[2rem] border-white/5 bg-slate-900/20">
+                  <Star className="w-10 h-10 text-slate-700 mx-auto mb-3" />
+                  <p className="text-slate-500 font-medium italic text-sm">No reviews yet.</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review: any) => (
+                    <div key={review.id} className="p-6 rounded-[2rem] bg-slate-800/30 border border-white/5">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-slate-700 flex items-center justify-center font-black text-slate-300 text-sm">
+                            {review.reviewer?.name?.[0] || "U"}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-white">{review.reviewer?.name || "Anonymous"}</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star key={i} className={`w-4 h-4 ${i < review.rating ? "text-yellow-400 fill-yellow-400" : "text-slate-700"}`} />
+                          ))}
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <p className="text-slate-400 text-sm font-medium italic">"{review.comment}"</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
           </Card>
           </div>
         </div>

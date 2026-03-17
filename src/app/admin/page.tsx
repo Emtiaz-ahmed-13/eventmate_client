@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AdminServices } from "@/services/admin.service";
+import { AnalyticsServices } from "@/services/analytics.service";
 import { useAuthStore } from "@/store/auth.store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,6 +47,11 @@ export default function AdminDashboard() {
   const { data: stats, isLoading: statsLoading } = useQuery({
     queryKey: ["admin-stats"],
     queryFn: AdminServices.getAdminStats,
+  });
+
+  const { data: analytics, isLoading: analyticsLoading } = useQuery({
+    queryKey: ["admin-analytics"],
+    queryFn: AnalyticsServices.getOverview,
   });
 
   return (
@@ -97,7 +103,7 @@ export default function AdminDashboard() {
           <div className="space-y-8">
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {statsLoading ? (
+              {statsLoading || analyticsLoading ? (
                 Array.from({ length: 4 }).map((_, i) => (
                   <Card key={i} className="border border-white/5 shadow-premium bg-slate-900/40 backdrop-blur-xl">
                     <CardContent className="p-6">
@@ -115,8 +121,8 @@ export default function AdminDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Total Network Users</p>
-                          <p className="text-3xl font-black text-white">{stats?.totalUsers || 1280}</p>
-                          <p className="text-xs text-green-500 font-bold">+5.2% Active participants</p>
+                          <p className="text-3xl font-black text-white">{analytics?.totalUsers ?? stats?.totalUsers ?? "—"}</p>
+                          <p className="text-xs text-green-500 font-bold">Active participants</p>
                         </div>
                         <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center">
                           <Users className="w-6 h-6 text-blue-500" />
@@ -130,8 +136,8 @@ export default function AdminDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Host Verifications</p>
-                          <p className="text-3xl font-black text-white">{stats?.totalHosts || 450}</p>
-                          <p className="text-xs text-yellow-500 font-bold">+12.4% Pending approvals</p>
+                          <p className="text-3xl font-black text-white">{analytics?.totalHosts ?? stats?.totalHosts ?? "—"}</p>
+                          <p className="text-xs text-yellow-500 font-bold">Verified hosts</p>
                         </div>
                         <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center">
                           <UserCheck className="w-6 h-6 text-purple-500" />
@@ -145,7 +151,7 @@ export default function AdminDashboard() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Active Nodes</p>
-                          <p className="text-3xl font-black text-white">{stats?.totalEvents || 142}</p>
+                          <p className="text-3xl font-black text-white">{analytics?.totalEvents ?? stats?.totalEvents ?? "—"}</p>
                           <p className="text-xs text-blue-500 font-bold">System events</p>
                         </div>
                         <div className="w-12 h-12 bg-green-500/10 rounded-xl flex items-center justify-center">
@@ -159,9 +165,9 @@ export default function AdminDashboard() {
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
                         <div>
-                          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Neural Health</p>
-                          <p className="text-3xl font-black text-white">${stats?.totalRevenue || 0}</p>
-                          <p className="text-xs text-green-500 font-bold">Real-time infrastructure</p>
+                          <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500 mb-2">Total Revenue</p>
+                          <p className="text-3xl font-black text-white">${analytics?.totalRevenue ?? stats?.totalRevenue ?? 0}</p>
+                          <p className="text-xs text-green-500 font-bold">Platform earnings</p>
                         </div>
                         <div className="w-12 h-12 bg-yellow-500/10 rounded-xl flex items-center justify-center">
                           <TrendingUp className="w-6 h-6 text-yellow-500" />
@@ -191,7 +197,7 @@ export default function AdminDashboard() {
                     >
                       <Users className="w-6 h-6" />
                       <span className="text-xs font-black uppercase tracking-[0.2em]">Manage Users</span>
-                      <span className="text-xs text-slate-400">{stats?.totalUsers || 1280} items</span>
+                      <span className="text-xs text-slate-400">{analytics?.totalUsers ?? stats?.totalUsers ?? "—"} items</span>
                     </Button>
                   </Link>
                   
@@ -202,7 +208,7 @@ export default function AdminDashboard() {
                     >
                       <UserCheck className="w-6 h-6" />
                       <span className="text-xs font-black uppercase tracking-[0.2em]">Verify Hosts</span>
-                      <span className="text-xs text-slate-400">{stats?.totalHosts || 142} items</span>
+                      <span className="text-xs text-slate-400">{analytics?.totalHosts ?? stats?.totalHosts ?? "—"} items</span>
                     </Button>
                   </Link>
                   
@@ -213,7 +219,7 @@ export default function AdminDashboard() {
                     >
                       <Shield className="w-6 h-6" />
                       <span className="text-xs font-black uppercase tracking-[0.2em]">Event Shield</span>
-                      <span className="text-xs text-slate-400">45 items</span>
+                      <span className="text-xs text-slate-400">{analytics?.totalEvents ?? stats?.totalEvents ?? "—"} items</span>
                     </Button>
                   </Link>
                   

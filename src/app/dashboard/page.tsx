@@ -30,7 +30,9 @@ import {
   UserX,
   ChevronDown,
   ChevronUp,
-  Bookmark
+  Bookmark,
+  Copy,
+  QrCode,
 } from "lucide-react";
 
 export default function Dashboard() {
@@ -74,6 +76,35 @@ export default function Dashboard() {
       toast.success("Participant rejected");
     },
     onError: () => toast.error("Failed to reject participant"),
+  });
+
+  const duplicateMutation = useMutation({
+    mutationFn: (eventId: string) => EventServices.duplicateEvent(eventId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+      toast.success("Event duplicated successfully");
+    },
+    onError: () => toast.error("Failed to duplicate event"),
+  });
+
+  const checkInMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) =>
+      EventServices.checkInParticipant(eventId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+      toast.success("Checked in");
+    },
+    onError: () => toast.error("Check-in failed"),
+  });
+
+  const undoCheckInMutation = useMutation({
+    mutationFn: ({ eventId, userId }: { eventId: string; userId: string }) =>
+      EventServices.undoCheckIn(eventId, userId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+      toast.success("Check-in undone");
+    },
+    onError: () => toast.error("Failed to undo check-in"),
   });
 
   const { data: userEventsResponse, isLoading: isEventsLoading } = useQuery({
@@ -403,6 +434,21 @@ export default function Dashboard() {
                       >
                         {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                       </Button>
+                      <Link href={`/events/${event.id}/analytics`}>
+                        <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-white/10 hover:bg-emerald-500/10 hover:border-emerald-500/20 hover:text-emerald-400" title="View analytics">
+                          <BarChart3 className="w-4 h-4" />
+                        </Button>
+                      </Link>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl border-white/10 hover:bg-indigo-500/10 hover:border-indigo-500/20 hover:text-indigo-400"
+                        title="Duplicate event"
+                        onClick={() => { if (confirm("Duplicate this event?")) duplicateMutation.mutate(event.id); }}
+                        disabled={duplicateMutation.isPending}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
                       <Link href={`/events/${event.id}/edit`}>
                         <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-white/10 hover:bg-blue-500/10 hover:border-blue-500/20 hover:text-blue-400" title="Edit event">
                           <Edit className="w-4 h-4" />
@@ -481,7 +527,30 @@ export default function Dashboard() {
                                     </Button>
                                   </>
                                 ) : p.status === "APPROVED" ? (
-                                  <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase">Approved</Badge>
+                                  <div className="flex items-center gap-2">
+                                    <Badge className="bg-primary/10 text-primary border-primary/20 text-[9px] font-black uppercase">Approved</Badge>
+                                    {p.checkedIn ? (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8 rounded-xl border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/10 font-black text-[10px] uppercase tracking-widest"
+                                        onClick={() => undoCheckInMutation.mutate({ eventId: event.id, userId: p.userId })}
+                                        disabled={undoCheckInMutation.isPending}
+                                      >
+                                        <QrCode className="w-3.5 h-3.5 mr-1" /> Checked In
+                                      </Button>
+                                    ) : (
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8 rounded-xl border-slate-500/20 text-slate-400 hover:bg-slate-500/10 font-black text-[10px] uppercase tracking-widest"
+                                        onClick={() => checkInMutation.mutate({ eventId: event.id, userId: p.userId })}
+                                        disabled={checkInMutation.isPending}
+                                      >
+                                        <QrCode className="w-3.5 h-3.5 mr-1" /> Check In
+                                      </Button>
+                                    )}
+                                  </div>
                                 ) : (
                                   <Badge className="bg-red-500/10 text-red-400 border-red-500/20 text-[9px] font-black uppercase">Rejected</Badge>
                                 )}

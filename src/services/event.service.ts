@@ -59,4 +59,20 @@ export const EventServices = {
     const response = await api.patch(`/events/${eventId}/participants/${userId}/reject`);
     return response.data;
   },
+  getEventAnalytics: async (eventId: string) => {
+    const response = await api.get(`/events/${eventId}/analytics`);
+    return response.data.data;
+  },
+  duplicateEvent: async (eventId: string) => {
+    const response = await api.post(`/events/${eventId}/duplicate`);
+    return response.data.data;
+  },
+  checkInParticipant: async (eventId: string, userId: string) => {
+    const response = await api.patch(`/events/${eventId}/participants/${userId}/checkin`);
+    return response.data.data;
+  },
+  undoCheckIn: async (eventId: string, userId: string) => {
+    const response = await api.patch(`/events/${eventId}/participants/${userId}/undo-checkin`);
+    return response.data.data;
+  },
 };

@@ -43,4 +43,26 @@ export const AdminServices = {
     const response = await api.get("/Admin/stats");
     return response.data.data;
   },
+
+  // System Logs
+  getSystemLogs: async (limit = 50, type?: string) => {
+    const response = await api.get("/Admin/logs", { params: { limit, type } });
+    return response.data.data;
+  },
+
+  // Host Verifications
+  getPendingHosts: async () => {
+    const response = await api.get("/Admin/pending-hosts");
+    return response.data.data;
+  },
+
+  approveHost: async (userId: string) => {
+    const response = await api.patch(`/Admin/users/${userId}/role`, { role: "HOST" });
+    return response.data;
+  },
+
+  revokeHost: async (userId: string) => {
+    const response = await api.patch(`/Admin/users/${userId}/role`, { role: "USER" });
+    return response.data;
+  },
 };

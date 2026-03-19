@@ -3,13 +3,13 @@ import api from "@/lib/api";
 export const AuthService = {
   login: async (data: any) => {
     const response = await api.post("/auth/login", data, {
-      timeout: 10000,
+      timeout: 60000, // Render free tier cold start can take up to 60s
     });
     return response.data;
   },
   register: async (data: any) => {
     const response = await api.post("/auth/register", data, {
-      timeout: 10000,
+      timeout: 60000, // Render free tier cold start can take up to 60s
     });
     return response.data;
   },

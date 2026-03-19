@@ -552,8 +552,8 @@ export default function EventDetails() {
 
          {/* Payment Modal */}
          {showPaymentModal && (
-            <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
-               <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden">
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+               <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden my-auto">
                   
                   {/* Header */}
                   <div className="h-1.5 w-full bg-gradient-to-r from-primary via-primary/60 to-transparent" />

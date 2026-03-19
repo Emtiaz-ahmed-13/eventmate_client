@@ -4,6 +4,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { EventServices } from "@/services/event.service";
 import { UserServices } from "@/services/user.service";
+import { ReviewServices } from "@/services/review.service";
 import { useAuthStore } from "@/store/auth.store";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -54,6 +55,12 @@ export default function Home() {
     queryKey: ["hosts"],
     queryFn: () => UserServices.getAllHosts(),
     retry: 2,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: reviewsData } = useQuery({
+    queryKey: ["home-reviews"],
+    queryFn: () => ReviewServices.getAllReviews(6),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -341,7 +348,25 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[
+            {reviewsData && reviewsData.length > 0 ? reviewsData.slice(0, 6).map((review: any) => (
+              <div key={review.id} className="p-8 rounded-[2rem] bg-slate-900/60 border border-white/5 hover:border-white/10 transition-all duration-500 group">
+                <div className="flex gap-1 mb-5">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <Star key={s} className={`w-3.5 h-3.5 ${s <= review.rating ? "text-amber-400 fill-amber-400" : "text-slate-700"}`} />
+                  ))}
+                </div>
+                <p className="text-slate-300 font-medium mb-6 leading-relaxed text-sm">"{review.comment || "Great experience!"}"</p>
+                <div className="flex items-center gap-3 pt-5 border-t border-white/5">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-sm">
+                    {review.reviewer?.name?.[0] || "U"}
+                  </div>
+                  <div>
+                    <h5 className="text-sm font-black text-white">{review.reviewer?.name || "EventMate User"}</h5>
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Reviewed {review.host?.name}</p>
+                  </div>
+                </div>
+              </div>
+            )) : [
               { name: "Alex Thorne", body: "EventMate completely changed how I discover local events. The quality of experiences here is unmatched.", role: "Designer" },
               { name: "Maya Chen", body: "As a host, the tools are incredibly powerful. Managing attendees and payments is seamless.", role: "Tech Lead" },
               { name: "Julian Brooks", body: "Finally a platform that takes event discovery seriously. Clean, fast, and actually useful.", role: "Visual Artist" },

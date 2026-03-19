@@ -9,4 +9,8 @@ export const ReviewServices = {
     const response = await api.get(`/reviews/host/${hostId}`);
     return response.data.data;
   },
+  getAllReviews: async (limit = 6) => {
+    const response = await api.get(`/reviews?limit=${limit}`);
+    return response.data.data;
+  },
 };

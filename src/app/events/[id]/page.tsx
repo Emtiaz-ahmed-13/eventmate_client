@@ -133,13 +133,15 @@ export default function EventDetails() {
    });
 
    const reviewMutation = useMutation({
-      mutationFn: (data: { rating: number; comment: string }) =>
-         ReviewServices.createReview({
-            hostId: event?.hostId,
-            eventId: event?.id,
+      mutationFn: (data: { rating: number; comment: string }) => {
+         if (!event?.hostId || !event?.id) throw new Error("Event data not loaded");
+         return ReviewServices.createReview({
+            hostId: event.hostId,
+            eventId: event.id,
             rating: data.rating,
             comment: data.comment,
-         }),
+         });
+      },
       onSuccess: () => {
          toast.success("Review submitted!");
          setShowReviewForm(false);

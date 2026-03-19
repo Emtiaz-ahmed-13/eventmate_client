@@ -18,10 +18,11 @@ export default function PaymentForm({ onSuccess, onError, amount, isLoading = fa
   const stripe = useStripe();
   const elements = useElements();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isElementReady, setIsElementReady] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!stripe || !elements) return;
+    if (!stripe || !elements || !isElementReady) return;
 
     setIsProcessing(true);
     try {
@@ -46,18 +47,28 @@ export default function PaymentForm({ onSuccess, onError, amount, isLoading = fa
     }
   };
 
+  const isDisabled = !stripe || !isElementReady || isProcessing || isLoading;
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <div className="p-4 bg-slate-800/50 rounded-2xl border border-white/5">
-        <PaymentElement options={{ layout: "tabs" }} />
+        <PaymentElement
+          options={{ layout: "tabs" }}
+          onReady={() => setIsElementReady(true)}
+        />
       </div>
       <Button
         type="submit"
-        disabled={!stripe || isProcessing || isLoading}
+        disabled={isDisabled}
         variant="glow"
         className="w-full h-12 rounded-2xl font-black uppercase tracking-[0.2em] text-xs"
       >
-        {isProcessing ? (
+        {!isElementReady || isLoading ? (
+          <>
+            <Loader2 className="w-3 h-3 mr-2 animate-spin" />
+            Loading...
+          </>
+        ) : isProcessing ? (
           <>
             <Loader2 className="w-3 h-3 mr-2 animate-spin" />
             Processing...

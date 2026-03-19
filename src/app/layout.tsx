@@ -12,8 +12,31 @@ const outfit = Outfit({
 });
 
 export const metadata: Metadata = {
-  title: "EventMate",
-  description: "Your ultimate event planning companion",
+  title: "EventMate — Your Next Favorite Memory Starts Here",
+  description: "Discover and host unforgettable local events. Connect with people who share your passions through EventMate.",
+  keywords: ["events", "local events", "event hosting", "community", "eventmate"],
+  authors: [{ name: "EventMate" }],
+  openGraph: {
+    type: "website",
+    url: "https://eventmate-client.onrender.com",
+    title: "EventMate — Your Next Favorite Memory Starts Here",
+    description: "Discover and host unforgettable local events. Connect with people who share your passions.",
+    siteName: "EventMate",
+    images: [
+      {
+        url: "https://eventmate-client.onrender.com/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "EventMate — Discover Local Events",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "EventMate — Your Next Favorite Memory Starts Here",
+    description: "Discover and host unforgettable local events.",
+    images: ["https://eventmate-client.onrender.com/og-image.png"],
+  },
 };
 
 export default function RootLayout({

@@ -82,7 +82,6 @@ export default function EventDetails() {
       onError: (error: any) => {
          console.error("Failed to create payment intent:", error);
          toast.error(error.response?.data?.message || "Failed to initialize payment");
-         // modal বন্ধ করো না — user দেখুক কী হলো
       },
    });
 
@@ -242,7 +241,22 @@ export default function EventDetails() {
                   </Button>
                </Link>
                <div className="flex gap-4">
-                  <Button variant="outline" size="icon" className="bg-white/10 backdrop-blur-xl border-white/10 text-white rounded-2xl border">
+                  <Button
+                     variant="outline"
+                     size="icon"
+                     className="bg-white/10 backdrop-blur-xl border-white/10 text-white rounded-2xl border"
+                     onClick={async () => {
+                        const url = window.location.href;
+                        if (navigator.share) {
+                           try {
+                              await navigator.share({ title: event.name, text: event.description, url });
+                           } catch {}
+                        } else {
+                           await navigator.clipboard.writeText(url);
+                           toast.success("Link copied to clipboard!");
+                        }
+                     }}
+                  >
                      <Share2 className="w-4 h-4" />
                   </Button>
                   {isAuthenticated && (

@@ -366,27 +366,11 @@ export default function Home() {
                   </div>
                 </div>
               </div>
-            )) : [
-              { name: "Alex Thorne", body: "EventMate completely changed how I discover local events. The quality of experiences here is unmatched.", role: "Designer" },
-              { name: "Maya Chen", body: "As a host, the tools are incredibly powerful. Managing attendees and payments is seamless.", role: "Tech Lead" },
-              { name: "Julian Brooks", body: "Finally a platform that takes event discovery seriously. Clean, fast, and actually useful.", role: "Visual Artist" },
-            ].map((item, i) => (
-              <div key={i} className="p-8 rounded-[2rem] bg-slate-900/60 border border-white/5 hover:border-white/10 transition-all duration-500 group">
-                <div className="flex gap-1 mb-5">
-                  {[1, 2, 3, 4, 5].map((s) => <Star key={s} className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />)}
-                </div>
-                <p className="text-slate-300 font-medium mb-6 leading-relaxed text-sm">"{item.body}"</p>
-                <div className="flex items-center gap-3 pt-5 border-t border-white/5">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-sm">
-                    {item.name[0]}
-                  </div>
-                  <div>
-                    <h5 className="text-sm font-black text-white">{item.name}</h5>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{item.role}</p>
-                  </div>
-                </div>
+            )) : (
+              <div className="col-span-3 text-center py-16 text-slate-600 text-sm font-medium">
+                No reviews yet — be the first to leave one after attending an event.
               </div>
-            ))}
+            )}
           </div>
         </div>
       </section>

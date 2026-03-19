@@ -1,12 +1,11 @@
-# EventMate Client
+# EventMate — Client
 
-Frontend for EventMate — a full-featured event management platform. Built with Next.js 16, TypeScript, Tailwind CSS, and Shadcn UI.
+> Discover and host unforgettable local events. Connect with people who share your passions.
 
-## Live App
+**Live App:** [https://eventmate-client.onrender.com](https://eventmate-client.onrender.com)  
+**Backend API:** [https://eventmate-rwy8.onrender.com/api/v1](https://eventmate-rwy8.onrender.com/api/v1)
 
-```
-https://eventmate-client.vercel.app
-```
+---
 
 ## Tech Stack
 
@@ -21,8 +20,53 @@ https://eventmate-client.vercel.app
 | HTTP Client | Axios |
 | Forms | React Hook Form + Zod |
 | Payments | Stripe (React Stripe.js) |
+| Real-time | Socket.io Client |
 | Notifications | Sonner (toast) |
 | Icons | Lucide React |
+| Fonts | Outfit (Google Fonts) |
+
+---
+
+## Features
+
+**Auth**
+- JWT login with access + refresh tokens
+- Email verification on register
+- Forgot / reset password flow
+- Persistent auth state via Zustand
+
+**Events**
+- Browse with search, category, location, date range, paid-only filters
+- Create events with image upload via ImageKit (HOST)
+- Edit, cancel, delete own events (HOST)
+- Join free or paid events (Stripe payment flow)
+- Approval-required events — pending / approved / rejected status
+- Save / bookmark events
+
+**Payments**
+- Stripe Elements integration
+- Payment intent created server-side
+- Confirmed server-side after Stripe success
+
+**Participants (HOST)**
+- View all participants per event
+- Approve or reject pending join requests
+
+**Reviews**
+- Approved participants can rate and review the host
+- Star ratings with average score on host profile
+- Real reviews shown on homepage
+
+**Notifications**
+- Real-time via Socket.io
+- Bell icon with unread count badge
+- Notification dropdown in navbar
+
+**Admin Dashboard**
+- Real analytics (users, hosts, events, revenue)
+- Manage users — ban, role change, delete
+- Host verification workflow
+- Event moderation
 
 ---
 
@@ -45,200 +89,98 @@ NEXT_PUBLIC_API_URL=http://localhost:5001/api/v1
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 ```
 
-> For production, point `NEXT_PUBLIC_API_URL` to the live backend URL.
-
 ### 3. Run
 
 ```bash
-# Development
-npm run dev
-
-# Production build
-npm run build
-npm start
+npm run dev       # Development (Turbopack)
+npm run build     # Production build
+npm start         # Start production server
 ```
 
 App runs on `http://localhost:3000`
 
 ---
 
-## Scripts
-
-| Command | Description |
-|---|---|
-| `npm run dev` | Start dev server with Turbopack |
-| `npm run build` | Build for production |
-| `npm start` | Start production server |
-
----
-
 ## Project Structure
 
 ```
-eventmate_client/
-├── src/
-│   ├── app/                        # Next.js App Router pages
-│   │   ├── page.tsx                # Home page
-│   │   ├── layout.tsx              # Root layout
-│   │   ├── login/                  # Login page
-│   │   ├── register/               # Register page
-│   │   ├── forgot-password/        # Forgot password
-│   │   ├── reset-password/         # Reset password
-│   │   ├── verify-email/           # Email verification
-│   │   ├── verify-email-sent/      # Post-register confirmation
-│   │   ├── dashboard/              # User/Host/Admin dashboard
-│   │   ├── events/
-│   │   │   ├── page.tsx            # Browse all events
-│   │   │   ├── create/             # Create new event (HOST)
-│   │   │   └── [id]/
-│   │   │       ├── page.tsx        # Event detail + join/leave/review
-│   │   │       └── edit/           # Edit event (HOST)
-│   │   ├── profile/[id]/           # User profile + reviews
-│   │   ├── saved/                  # Saved/bookmarked events
-│   │   ├── hosts/                  # Browse all hosts
-│   │   └── admin/
-│   │       ├── page.tsx            # Admin dashboard (real analytics)
-│   │       ├── users/              # Manage users
-│   │       ├── hosts/              # Manage hosts
-│   │       ├── events/             # Manage events
-│   │       ├── host-verifications/ # Verify host requests
-│   │       ├── event-shield/       # Event moderation
-│   │       └── system-logs/        # System activity logs
-│   ├── components/
-│   │   ├── Navbar.tsx              # Navigation bar
-│   │   ├── PaymentForm.tsx         # Stripe payment form
-│   │   ├── providers/
-│   │   │   ├── QueryProvider.tsx   # TanStack Query provider
-│   │   │   └── StripeProvider.tsx  # Stripe Elements provider
-│   │   └── ui/                     # Shadcn UI components
-│   ├── services/                   # API service layer
-│   │   ├── auth.service.ts         # Auth endpoints
-│   │   ├── event.service.ts        # Event CRUD + join/save/participants
-│   │   ├── user.service.ts         # User profile + hosts
-│   │   ├── review.service.ts       # Reviews
-│   │   ├── payment.service.ts      # Stripe payments
-│   │   ├── admin.service.ts        # Admin operations
-│   │   └── analytics.service.ts   # Analytics overview
-│   ├── store/
-│   │   └── auth.store.ts           # Zustand auth state
-│   └── lib/
-│       ├── api.ts                  # Axios instance with interceptors
-│       └── utils.ts                # Utility functions
-├── public/                         # Static assets
-├── .env.local                      # Environment variables (not committed)
-└── package.json
+src/
+├── app/
+│   ├── page.tsx                  # Home
+│   ├── layout.tsx                # Root layout + metadata
+│   ├── login/                    # Login
+│   ├── register/                 # Register (USER or HOST)
+│   ├── forgot-password/
+│   ├── reset-password/
+│   ├── verify-email/
+│   ├── verify-email-sent/
+│   ├── dashboard/                # Role-based dashboard
+│   ├── events/
+│   │   ├── page.tsx              # Browse events + filters
+│   │   ├── create/               # Create event (HOST)
+│   │   └── [id]/
+│   │       ├── page.tsx          # Event detail + join/pay/review
+│   │       └── edit/             # Edit event (HOST)
+│   ├── profile/[id]/             # User profile + reviews
+│   ├── saved/                    # Bookmarked events
+│   ├── hosts/                    # Browse all hosts
+│   └── admin/                    # Admin panel
+├── components/
+│   ├── Navbar.tsx
+│   ├── PaymentForm.tsx
+│   └── providers/
+├── services/                     # API layer (Axios)
+├── store/
+│   └── auth.store.ts             # Zustand auth
+├── hooks/
+│   └── useNotifications.ts       # Socket.io notifications
+└── lib/
+    ├── api.ts                    # Axios instance
+    └── socket.ts                 # Socket.io singleton
 ```
 
 ---
 
-## Pages & Features
+## Pages
 
-### Public Pages
-| Route | Description |
-|---|---|
-| `/` | Home — trending events, featured hosts, CTA |
-| `/events` | Browse & search all events |
-| `/events/:id` | Event detail — join, save, payment, review |
-| `/hosts` | Browse all verified hosts |
-| `/login` | Login |
-| `/register` | Register (USER or HOST role) |
-| `/forgot-password` | Request password reset |
-| `/reset-password` | Set new password via token |
-| `/verify-email` | Email verification |
-
-### Authenticated Pages
-| Route | Role | Description |
+| Route | Access | Description |
 |---|---|---|
-| `/dashboard` | All | Role-based dashboard |
-| `/profile/:id` | All | View/edit profile, see reviews |
-| `/saved` | All | Saved/bookmarked events |
-| `/events/create` | HOST | Create new event |
-| `/events/:id/edit` | HOST | Edit, cancel, or delete event |
+| `/` | Public | Home — events, hosts, reviews, CTA |
+| `/events` | Public | Browse + filter events |
+| `/events/:id` | Public | Event detail, join, pay, review |
+| `/hosts` | Public | All verified hosts |
+| `/login` | Public | Login |
+| `/register` | Public | Register |
+| `/dashboard` | Auth | Role-based dashboard |
+| `/profile/:id` | Auth | Profile + edit |
+| `/saved` | Auth | Saved events |
+| `/events/create` | HOST | Create event |
+| `/events/:id/edit` | HOST | Edit event |
+| `/admin` | ADMIN | Admin dashboard |
 
-### Admin Pages
-| Route | Description |
+---
+
+## Environment Variables
+
+| Variable | Description |
 |---|---|
-| `/admin` | Dashboard with real analytics |
-| `/admin/users` | Manage users — ban, role change, delete |
-| `/admin/hosts` | View all hosts |
-| `/admin/host-verifications` | Approve/reject host requests |
-| `/admin/events` | View and delete any event |
-| `/admin/event-shield` | Event moderation tools |
-| `/admin/system-logs` | System activity logs |
+| `NEXT_PUBLIC_API_URL` | Backend API base URL |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
 
 ---
 
-## Key Features
+## Deployment
 
-**Authentication**
-- JWT-based login with access + refresh tokens
-- Email verification on register
-- Forgot/reset password flow
-- Persistent auth state via Zustand
+Deployed on **Render** as a Node.js Web Service.
 
-**Events**
-- Browse with search and filters
-- Create events with image upload (HOST)
-- Edit, cancel, delete own events (HOST)
-- Join free or paid events (Stripe)
-- Approval-required events with pending/approved/rejected status
-- Save/bookmark events
-
-**Participant Management (HOST)**
-- View all participants per event
-- Approve or reject pending requests
-- Expandable panel in dashboard
-
-**Reviews**
-- Approved participants can rate and review the host
-- Reviews shown on host profile with star ratings and average score
-
-**Saved Events**
-- Dedicated `/saved` page
-- Remove from saved with one click
-
-**Admin Dashboard**
-- Real analytics from `GET /analytics/overview`
-- Manage users (ban, role change, delete)
-- Manage events (view, delete)
-- Host verification workflow
+- Build: `npm install && npm run build`
+- Start: `npm start`
 
 ---
 
-## Services Overview
+## Related
 
-All API calls go through `src/lib/api.ts` (Axios instance with base URL and auth token interceptor).
-
-| Service | Methods |
-|---|---|
-| `auth.service.ts` | `login`, `register`, `logout`, `getMe`, `forgotPassword`, `resetPassword`, `verifyEmail` |
-| `event.service.ts` | `getAllEvents`, `getEventById`, `createEvent`, `updateEvent`, `deleteEvent`, `cancelEvent`, `joinEvent`, `leaveEvent`, `saveEvent`, `unsaveEvent`, `getSavedEvents`, `getEventWaitlist`, `approveParticipant`, `rejectParticipant` |
-| `user.service.ts` | `getUserProfile`, `getUserEvents`, `updateProfile`, `updateProfileImage`, `getAllHosts` |
-| `review.service.ts` | `createReview`, `getHostReviews` |
-| `payment.service.ts` | `createPaymentIntent`, `confirmPayment` |
-| `admin.service.ts` | `getAllUsers`, `getAllHosts`, `changeUserRole`, `toggleUserBan`, `deleteUser`, `getAllEvents`, `deleteEvent`, `getAdminStats` |
-| `analytics.service.ts` | `getOverview` |
-
----
-
-## Design System
-
-Dark theme throughout with consistent tokens:
-
-- Background: `bg-slate-900/40` with `backdrop-blur-xl`
-- Borders: `border-white/5`
-- Cards: `rounded-[2.5rem]`
-- Primary color: Emerald green (`text-primary`, `bg-primary`)
-- Typography: `font-black`, `uppercase tracking-widest`
-
----
-
-## Backend
-
-This frontend connects to the [EventMate Server](../eventmate_server/README.md).
-
-Local backend: `http://localhost:5001/api/v1`
-Live backend: `https://eventmate-server-3.onrender.com/api/v1`
+- [EventMate Server](../eventmate_server/README.md) — Backend REST API
 
 ---
 

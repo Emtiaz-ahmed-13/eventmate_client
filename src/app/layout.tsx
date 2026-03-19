@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Outfit } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { Navbar } from "@/components/Navbar";
 import { Toaster } from "sonner";
 
@@ -22,15 +23,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${outfit.variable} font-sans antialiased`}
-        suppressHydrationWarning
-      >
-        <QueryProvider>
-          <Navbar />
-          {children}
-          <Toaster position="top-right" />
-        </QueryProvider>
+      <body className={`${outfit.variable} font-sans antialiased`} suppressHydrationWarning>
+        <ThemeProvider>
+          <QueryProvider>
+            <Navbar />
+            {children}
+            <Toaster position="top-right" />
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

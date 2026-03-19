@@ -38,37 +38,76 @@
 
 :root {
   --radius: 1rem;
-  
-  /* Deep Midnight Background */
   --background: oklch(0.12 0.015 240);
   --foreground: oklch(0.98 0.005 240);
-  
-  /* Futuristic Emerald Primary */
   --primary: oklch(0.65 0.22 160);
   --primary-foreground: oklch(0.12 0.015 240);
-  
-  /* Electric Blue Accent */
   --accent: oklch(0.6 0.25 250);
   --accent-foreground: oklch(1 0 0);
-  
-  /* Lighter Midnight Secondary */
   --secondary: oklch(0.18 0.02 240);
   --secondary-foreground: oklch(0.98 0.005 240);
-
-  /* Muted Slate */
   --muted: oklch(0.22 0.02 240);
   --muted-foreground: oklch(0.65 0.02 240);
-
-  /* Subtle Borders */
   --border: oklch(0.25 0.02 240);
   --input: oklch(0.25 0.02 240);
   --ring: oklch(0.65 0.22 160 / 0.3);
 }
 
+/* ===== LIGHT MODE ===== */
+.light {
+  color-scheme: light;
+  --background: #ffffff;
+  --foreground: #0f172a;
+  --primary: #059669;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: rgba(5, 150, 105, 0.3);
+  --accent: #3b82f6;
+  --accent-foreground: #ffffff;
+}
+
+/* Light mode overrides */
+.light nav {
+  background-color: rgba(255, 255, 255, 0.92) !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light .bg-slate-950 { background-color: #f8fafc !important; }
+
+.light .bg-slate-900\/40,
+.light .bg-slate-900\/60,
+.light .bg-slate-900\/20 { background-color: #f8fafc !important; }
+
+.light .bg-slate-800\/30,
+.light .bg-slate-800\/50 { background-color: #f1f5f9 !important; }
+
+.light .bg-slate-800 { background-color: #e2e8f0 !important; }
+.light .bg-slate-700 { background-color: #cbd5e1 !important; }
+
+.light .border-white\/5 { border-color: rgba(0,0,0,0.07) !important; }
+.light .border-white\/10 { border-color: rgba(0,0,0,0.10) !important; }
+
+.light .text-white { color: #0f172a !important; }
+.light .text-slate-400 { color: #64748b !important; }
+.light .text-slate-500 { color: #475569 !important; }
+.light .text-slate-600 { color: #334155 !important; }
+
+.light input,
+.light select,
+.light textarea {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+.light input::placeholder { color: #94a3b8 !important; }
+
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
   body {
     @apply bg-background text-foreground scroll-smooth antialiased font-sans;
   }
@@ -85,9 +124,6 @@
     @apply bg-clip-text text-transparent bg-gradient-to-br from-white via-primary to-accent;
   }
   .glow-emerald {
-    @apply shadow-[0_0_20px_rgba(16,185,129,0.2)];
-  }
-  .border-glow {
-    @apply border-primary/30 shadow-[0_0_15px_rgba(16,185,129,0.15)];
+    @apply shadow-[0_0_20px_rgba(16,185,129,0.5)];
   }
 }

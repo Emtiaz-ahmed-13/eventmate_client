@@ -76,11 +76,14 @@ export default function ProfilePage() {
     enabled: !!profile && !!id && id !== "undefined",
   });
 
-  const { data: reviews, isLoading: isReviewsLoading } = useQuery({
+  const { data: reviewsData, isLoading: isReviewsLoading } = useQuery({
     queryKey: ["host-reviews", id],
     queryFn: () => ReviewServices.getHostReviews(id),
     enabled: !!id && id !== "undefined",
   });
+
+  const reviews = Array.isArray(reviewsData) ? reviewsData : (reviewsData?.reviews ?? []);
+  const averageRating = reviewsData?.averageRating ?? 0;
 
   // Update profile mutation
   const updateProfileMutation = useMutation({
@@ -104,6 +107,17 @@ export default function ProfilePage() {
     onError: () => toast.error("Failed to update profile photo"),
   });
 
+  // Update header image mutation
+  const updateHeaderImageMutation = useMutation({
+    mutationFn: (file: File) => UserServices.updateHeaderImage(file),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["user", id] });
+      setIsEditingHeader(false);
+      toast.success("Header photo updated!");
+    },
+    onError: () => toast.error("Failed to update header photo"),
+  });
+
   // Update edit form when profile changes
   React.useEffect(() => {
     if (profile) {
@@ -113,7 +127,7 @@ export default function ProfilePage() {
         interests: profile.profile?.interests || [],
         location: profile.profile?.location || "",
         profilePhoto: profile.profile?.profileImage || "",
-        headerPhoto: profile.profile?.headerPhoto || ""
+        headerPhoto: profile.profile?.headerImage || ""
       });
     }
   }, [profile]);
@@ -121,15 +135,10 @@ export default function ProfilePage() {
   // Handle file upload
   const handleFileUpload = async (file: File, type: 'profile' | 'header') => {
     if (!file) return;
-    
     if (type === 'profile') {
-      // Upload profile image to backend
       updateProfileImageMutation.mutate(file);
     } else {
-      // For header photo, create a local URL for now
-      // In a real app, you'd upload to a file service
-      const imageUrl = URL.createObjectURL(file);
-      setEditForm(prev => ({ ...prev, headerPhoto: imageUrl }));
+      updateHeaderImageMutation.mutate(file);
     }
   };
 
@@ -144,8 +153,6 @@ export default function ProfilePage() {
 
   // Handle save header
   const handleSaveHeader = () => {
-    // In a real app, you would upload the header photo to a file service
-    // For now, we'll just close the edit mode
     setIsEditingHeader(false);
   };
 
@@ -201,7 +208,7 @@ export default function ProfilePage() {
               <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(16,185,129,0.15),transparent_70%)]" />
               
               {/* Animated background pattern when no header image */}
-              {!(editForm.headerPhoto || profile?.profile?.headerPhoto) && (
+              {!(editForm.headerPhoto || profile?.profile?.headerImage) && (
                 <div className="absolute inset-0">
                   <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-slate-700 to-slate-900" />
                   <div className="absolute inset-0 opacity-30">
@@ -213,9 +220,9 @@ export default function ProfilePage() {
               )}
               
               {/* Header Image */}
-              {(editForm.headerPhoto || profile?.profile?.headerPhoto) && (
+              {(editForm.headerPhoto || profile?.profile?.headerImage) && (
                 <img 
-                  src={editForm.headerPhoto || profile?.profile?.headerPhoto} 
+                  src={editForm.headerPhoto || profile?.profile?.headerImage} 
                   alt="Header" 
                   className="w-full h-full object-cover transition-all duration-300"
                 />
@@ -263,8 +270,7 @@ export default function ProfilePage() {
                         className="bg-red-500/10 border-red-500/20 text-red-400 hover:bg-red-500/20 rounded-xl"
                         onClick={() => {
                           setIsEditingHeader(false);
-                          // Reset header photo to original
-                          setEditForm(prev => ({ ...prev, headerPhoto: profile?.profile?.headerPhoto || "" }));
+                          setEditForm(prev => ({ ...prev, headerPhoto: profile?.profile?.headerImage || "" }));
                         }}
                       >
                         <X className="w-4 h-4" />
@@ -604,7 +610,7 @@ export default function ProfilePage() {
                 </div>
                 {reviews && reviews.length > 0 && (
                   <Badge variant="emerald" className="bg-primary/20 text-primary border-none px-4 py-2 font-black text-[10px] uppercase tracking-widest">
-                    {(reviews.reduce((s: number, r: any) => s + r.rating, 0) / reviews.length).toFixed(1)} avg
+                    {averageRating} avg
                   </Badge>
                 )}
               </div>

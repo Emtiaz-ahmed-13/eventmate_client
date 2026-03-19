@@ -82,7 +82,7 @@ export default function EventDetails() {
       onError: (error: any) => {
          console.error("Failed to create payment intent:", error);
          toast.error(error.response?.data?.message || "Failed to initialize payment");
-         setShowPaymentModal(false);
+         // modal বন্ধ করো না — user দেখুক কী হলো
       },
    });
 
@@ -151,7 +151,8 @@ export default function EventDetails() {
    });
 
    const handleJoinClick = () => {
-      if (event?.joiningFee > 0) {
+      const fee = Number(event?.joiningFee ?? 0);
+      if (fee > 0) {
          setShowPaymentModal(true);
          createPaymentIntentMutation.mutate();
       } else {
@@ -160,8 +161,13 @@ export default function EventDetails() {
    };
 
    const handlePaymentSuccess = () => {
-      // For paid events, join after successful payment
-      joinMutation.mutate();
+      // confirmPayment already added participant in DB — just refresh UI
+      queryClient.invalidateQueries({ queryKey: ["event", id] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+      setShowPaymentModal(false);
+      setClientSecret(null);
+      setPaymentIntentId(null);
+      toast.success("Payment successful! You've joined the event.");
    };
 
    const handlePaymentError = (error: string) => {
@@ -546,54 +552,71 @@ export default function EventDetails() {
 
          {/* Payment Modal */}
          {showPaymentModal && (
-            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-               <div className="bg-slate-900/90 backdrop-blur-xl rounded-[2rem] border border-white/10 p-6 max-w-sm w-full">
-                  <div className="flex items-center justify-between mb-4">
-                     <h3 className="text-xl font-black text-white">Payment</h3>
-                     <Button 
-                        variant="outline" 
-                        size="icon" 
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-50 flex items-center justify-center p-4">
+               <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] w-full max-w-md shadow-2xl overflow-hidden">
+                  
+                  {/* Header */}
+                  <div className="h-1.5 w-full bg-gradient-to-r from-primary via-primary/60 to-transparent" />
+                  <div className="flex items-center justify-between px-8 pt-7 pb-5 border-b border-white/5">
+                     <div>
+                        <h3 className="text-xl font-black text-white tracking-tight">Complete Payment</h3>
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mt-0.5">Secure checkout</p>
+                     </div>
+                     <button
                         onClick={handleClosePaymentModal}
-                        className="text-slate-400 hover:text-white border-white/10 h-8 w-8"
+                        className="w-9 h-9 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-all"
                      >
                         <X className="w-4 h-4" />
-                     </Button>
+                     </button>
                   </div>
-                  
-                  {event?.approvalRequired && (
-                     <div className="mb-4 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-xl">
-                        <p className="text-yellow-400 text-xs font-medium">
-                           ⚠️ Payment after host approval
-                        </p>
-                     </div>
-                  )}
 
-                  {clientSecret ? (
-                     <StripeProvider clientSecret={clientSecret}>
-                        <PaymentForm
-                           onSuccess={handlePaymentSuccess}
-                           onError={handlePaymentError}
-                           amount={event?.joiningFee || 0}
-                           eventName={event?.name || ""}
-                           isLoading={joinMutation.isPending}
-                        />
-                     </StripeProvider>
-                  ) : (
-                     <div className="space-y-4">
-                        <div className="p-4 bg-slate-800/50 rounded-xl border border-white/5">
-                           <div className="flex items-center justify-between mb-2">
-                              <span className="text-slate-400 text-sm">Event Fee</span>
-                              <span className="text-xl font-black text-white">${event?.joiningFee}</span>
-                           </div>
-                           <p className="text-xs text-slate-500 truncate">{event?.name}</p>
-                        </div>
-
-                        <div className="flex items-center justify-center py-4">
-                           <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-primary"></div>
-                           <span className="ml-2 text-slate-400 text-sm">Loading...</span>
-                        </div>
+                  {/* Event Info */}
+                  <div className="px-8 py-5 border-b border-white/5 flex items-center gap-4">
+                     <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-lg flex-shrink-0">
+                        {event?.type?.[0]}
                      </div>
-                  )}
+                     <div className="flex-1 min-w-0">
+                        <p className="text-white font-black text-sm truncate">{event?.name}</p>
+                        <p className="text-slate-500 text-xs mt-0.5">{new Date(event?.dateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+                     </div>
+                     <div className="text-right flex-shrink-0">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Fee</p>
+                        <p className="text-2xl font-black text-primary">${event?.joiningFee}</p>
+                     </div>
+                  </div>
+
+                  {/* Body */}
+                  <div className="px-8 py-6">
+                     {event?.approvalRequired && (
+                        <div className="mb-5 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded-2xl flex items-center gap-3">
+                           <span className="text-lg">⚠️</span>
+                           <p className="text-yellow-400 text-xs font-medium">Host approval required before payment is charged</p>
+                        </div>
+                     )}
+
+                     {clientSecret ? (
+                        <StripeProvider clientSecret={clientSecret}>
+                           <PaymentForm
+                              onSuccess={handlePaymentSuccess}
+                              onError={handlePaymentError}
+                              amount={event?.joiningFee || 0}
+                              eventName={event?.name || ""}
+                              isLoading={joinMutation.isPending}
+                           />
+                        </StripeProvider>
+                     ) : (
+                        <div className="flex flex-col items-center justify-center py-10 gap-4">
+                           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+                           <span className="text-slate-500 text-xs font-black uppercase tracking-widest">Initializing payment...</span>
+                        </div>
+                     )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="px-8 pb-6 flex items-center justify-center gap-2 text-slate-600 text-[10px] font-black uppercase tracking-widest">
+                     <ShieldCheck className="w-3 h-3" />
+                     Secured by Stripe
+                  </div>
                </div>
             </div>
          )}

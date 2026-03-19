@@ -76,10 +76,10 @@ function RegisterContent() {
             Event<span className="text-primary glow-emerald">Mate</span>
           </Link>
           <h2 className="mt-8 text-3xl font-black text-white tracking-tight">
-            Establish Identity
+            Create Account
           </h2>
-          <p className="mt-2 text-xs font-black text-slate-500 uppercase tracking-[0.2em] italic">
-            Join the nexus ecosystem
+          <p className="mt-2 text-xs font-black text-slate-500 uppercase tracking-[0.2em]">
+            Join the EventMate community
           </p>
         </div>
 
@@ -170,18 +170,15 @@ function RegisterContent() {
             className="w-full h-14 font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl transition-all active:scale-[0.98]"
           >
             {loading
-              ? "Establishing..."
-              : `Sync as ${selectedRole === "USER" ? "Participant" : "Architect"}`}
+              ? "Creating account..."
+              : `Sign up as ${selectedRole === "USER" ? "Participant" : "Host"}`}
           </Button>
         </form>
 
-        <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
-          Already synced?{" "}
-          <Link
-            href="/login"
-            className="text-primary hover:text-white transition-colors"
-          >
-            Access Session
+        <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-500">
+          Already have an account?{" "}
+          <Link href="/login" className="text-primary hover:text-white transition-colors">
+            Log in
           </Link>
         </p>
       </div>

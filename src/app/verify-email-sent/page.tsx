@@ -59,10 +59,10 @@ function VerifyEmailSentContent() {
             Event<span className="text-primary glow-emerald">Mate</span>
           </Link>
           <h2 className="mt-8 text-3xl font-black text-white tracking-tight">
-            Verify Protocol
+            Check Your Email
           </h2>
-          <p className="mt-2 text-xs font-black text-slate-500 uppercase tracking-[0.2em] italic">
-            Authentication link transmitted
+          <p className="mt-2 text-xs font-black text-slate-500 uppercase tracking-[0.2em]">
+            Verification link sent
           </p>
         </div>
 
@@ -87,7 +87,7 @@ function VerifyEmailSentContent() {
           {/* Warning */}
           <div className="p-4 bg-yellow-900/20 border border-yellow-500/20 rounded-2xl">
             <p className="text-yellow-400 text-[10px] font-black uppercase tracking-[0.2em] text-center">
-              ⚠️ Verify before accessing nexus
+              ⚠️ Please verify before logging in
             </p>
           </div>
 
@@ -122,7 +122,7 @@ function VerifyEmailSentContent() {
                 variant="outline"
                 className="w-full h-12 border-white/10 text-white hover:bg-white/5 font-black text-xs uppercase tracking-[0.3em] rounded-2xl"
               >
-                Access Session
+                Go to Login
               </Button>
             </div>
           </div>
@@ -141,10 +141,10 @@ function VerifyEmailSentContent() {
           </div>
         </div>
 
-        <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
-          Wrong Protocol?{" "}
+        <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-500">
+          Wrong email?{" "}
           <Link href="/register" className="text-primary hover:text-white transition-colors">
-            Re-establish Identity
+            Register again
           </Link>
         </p>
       </div>

@@ -17,9 +17,15 @@ export const UserServices = {
     const formData = new FormData();
     formData.append('image', file);
     const response = await api.patch(`/users/update-profile-image`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+  updateHeaderImage: async (file: File) => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const response = await api.patch(`/users/update-header-image`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
   },

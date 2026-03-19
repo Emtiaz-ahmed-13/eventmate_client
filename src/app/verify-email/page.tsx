@@ -65,10 +65,10 @@ function VerifyEmailContent() {
             Event<span className="text-primary glow-emerald">Mate</span>
           </Link>
           <h2 className="mt-8 text-3xl font-black text-white tracking-tight">
-            Protocol Verification
+            Email Verification
           </h2>
-          <p className="mt-2 text-xs font-black text-slate-500 uppercase tracking-[0.2em] italic">
-            Authenticating identity matrix
+          <p className="mt-2 text-xs font-black text-slate-500 uppercase tracking-[0.2em]">
+            Verifying your account
           </p>
         </div>
         
@@ -88,15 +88,15 @@ function VerifyEmailContent() {
                 <div className="text-green-500 text-4xl">✓</div>
               </div>
               <div className="space-y-2">
-                <p className="text-green-400 font-bold text-lg">Identity Verified</p>
-                <p className="text-slate-300 text-sm">{message}</p>
+                <p className="text-green-400 font-bold text-lg">Email Verified!</p>
+                <p className="text-slate-300 text-sm">Your account is now active. Please log in to continue.</p>
               </div>
               <Button 
                 onClick={() => router.push('/login')}
                 variant="glow"
                 className="w-full h-12 font-black text-xs uppercase tracking-[0.3em] rounded-2xl"
               >
-                Access Nexus
+                Go to Login
               </Button>
             </div>
           )}
@@ -116,14 +116,14 @@ function VerifyEmailContent() {
                   variant="glow"
                   className="w-full h-12 font-black text-xs uppercase tracking-[0.3em] rounded-2xl"
                 >
-                  Re-establish Identity
+                  Register Again
                 </Button>
                 <Button 
                   onClick={() => router.push('/login')}
                   variant="outline"
                   className="w-full h-12 border-white/10 text-white hover:bg-white/5 font-black text-xs uppercase tracking-[0.3em] rounded-2xl"
                 >
-                  Access Session
+                  Go to Login
                 </Button>
               </div>
             </div>

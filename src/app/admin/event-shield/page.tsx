@@ -47,7 +47,6 @@ export default function EventShieldPage() {
     queryFn: AdminServices.getAllEvents,
   });
 
-  // Mock security data - in real app this would come from backend
   const securityAlerts = [
     {
       id: 1,

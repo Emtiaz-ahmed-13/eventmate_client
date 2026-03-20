@@ -264,7 +264,7 @@ export default function Home() {
                         {event._count?.participants ?? event.participants?.length ?? 0}/{event.maxParticipants} joined
                       </div>
                       <Link href={`/events/${event.id}`}>
-                        <Button size="sm" variant="glow" className="rounded-xl font-black text-xs px-5">Join</Button>
+                        <Button size="sm" variant="glow" className="rounded-xl font-black text-xs px-5">Details</Button>
                       </Link>
                     </div>
                   </CardContent>

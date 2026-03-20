@@ -1,9 +1,18 @@
 # EventMate — Client
 
-> Discover and host unforgettable local events. Connect with people who share your passions.
+<p align="center">
+  <img src="public/eventmate.png" alt="EventMate Logo" width="120" />
+</p>
 
-**Live App:** [https://eventmate-client.onrender.com](https://eventmate-client.onrender.com)  
-**Backend API:** [https://eventmate-rwy8.onrender.com/api/v1](https://eventmate-rwy8.onrender.com/api/v1)
+<p align="center">
+  <strong>Discover and host unforgettable local events.</strong><br/>
+  Connect with people who share your passions through EventMate.
+</p>
+
+<p align="center">
+  <a href="https://eventmate-client.onrender.com">🌐 Live App</a> &nbsp;|&nbsp;
+  <a href="https://eventmate-server-5.onrender.com/api/v1">⚙️ Backend API</a>
+</p>
 
 ---
 
@@ -29,44 +38,50 @@
 
 ## Features
 
-**Auth**
+### Auth
 - JWT login with access + refresh tokens
 - Email verification on register
 - Forgot / reset password flow
 - Persistent auth state via Zustand
 
-**Events**
+### Events
 - Browse with search, category, location, date range, paid-only filters
 - Create events with image upload via ImageKit (HOST)
 - Edit, cancel, delete own events (HOST)
+- Duplicate event (HOST)
 - Join free or paid events (Stripe payment flow)
 - Approval-required events — pending / approved / rejected status
 - Save / bookmark events
+- Event analytics dashboard (HOST)
 
-**Payments**
+### Participants (HOST)
+- View all participants per event
+- Approve or reject pending join requests
+- Check-in / undo check-in participants
+- Waitlist management
+
+### Payments
 - Stripe Elements integration
 - Payment intent created server-side
 - Confirmed server-side after Stripe success
 
-**Participants (HOST)**
-- View all participants per event
-- Approve or reject pending join requests
-
-**Reviews**
+### Reviews
 - Approved participants can rate and review the host
+- Shows reviewer name, host name, and event name
 - Star ratings with average score on host profile
-- Real reviews shown on homepage
+- All reviews page with load more pagination
 
-**Notifications**
+### Notifications
 - Real-time via Socket.io
 - Bell icon with unread count badge
 - Notification dropdown in navbar
 
-**Admin Dashboard**
+### Admin Dashboard
 - Real analytics (users, hosts, events, revenue)
 - Manage users — ban, role change, delete
 - Host verification workflow
-- Event moderation
+- Event moderation (event-shield)
+- System logs
 
 ---
 
@@ -103,40 +118,56 @@ App runs on `http://localhost:3000`
 
 ## Project Structure
 
-```
+```text
 src/
 ├── app/
-│   ├── page.tsx                  # Home
-│   ├── layout.tsx                # Root layout + metadata
-│   ├── login/                    # Login
-│   ├── register/                 # Register (USER or HOST)
+│   ├── page.tsx                    # Home — events, hosts, reviews, CTA
+│   ├── layout.tsx                  # Root layout + metadata + favicon
+│   ├── login/
+│   ├── register/
 │   ├── forgot-password/
 │   ├── reset-password/
 │   ├── verify-email/
 │   ├── verify-email-sent/
-│   ├── dashboard/                # Role-based dashboard
+│   ├── dashboard/                  # Role-based dashboard
+│   ├── reviews/                    # All reviews page
 │   ├── events/
-│   │   ├── page.tsx              # Browse events + filters
-│   │   ├── create/               # Create event (HOST)
+│   │   ├── page.tsx                # Browse events + filters
+│   │   ├── create/                 # Create event (HOST)
 │   │   └── [id]/
-│   │       ├── page.tsx          # Event detail + join/pay/review
-│   │       └── edit/             # Edit event (HOST)
-│   ├── profile/[id]/             # User profile + reviews
-│   ├── saved/                    # Bookmarked events
-│   ├── hosts/                    # Browse all hosts
-│   └── admin/                    # Admin panel
+│   │       ├── page.tsx            # Event detail + join/pay/review
+│   │       ├── edit/               # Edit event (HOST)
+│   │       └── analytics/          # Event analytics (HOST)
+│   ├── profile/[id]/               # User profile + reviews
+│   ├── saved/                      # Bookmarked events
+│   ├── hosts/                      # Browse all verified hosts
+│   └── admin/
+│       ├── page.tsx                # Admin dashboard
+│       ├── users/                  # User management
+│       ├── hosts/                  # Host management
+│       ├── events/                 # Event moderation
+│       ├── host-verifications/     # Host approval workflow
+│       ├── event-shield/           # Event moderation shield
+│       └── system-logs/            # System logs
 ├── components/
 │   ├── Navbar.tsx
 │   ├── PaymentForm.tsx
 │   └── providers/
-├── services/                     # API layer (Axios)
+├── services/                       # API layer (Axios)
+│   ├── auth.service.ts
+│   ├── event.service.ts
+│   ├── user.service.ts
+│   ├── review.service.ts
+│   ├── payment.service.ts
+│   ├── admin.service.ts
+│   └── analytics.service.ts
 ├── store/
-│   └── auth.store.ts             # Zustand auth
+│   └── auth.store.ts               # Zustand auth
 ├── hooks/
-│   └── useNotifications.ts       # Socket.io notifications
+│   └── useNotifications.ts         # Socket.io notifications
 └── lib/
-    ├── api.ts                    # Axios instance
-    └── socket.ts                 # Socket.io singleton
+    ├── api.ts                      # Axios instance + interceptors
+    └── socket.ts                   # Socket.io singleton
 ```
 
 ---
@@ -145,18 +176,30 @@ src/
 
 | Route | Access | Description |
 |---|---|---|
-| `/` | Public | Home — events, hosts, reviews, CTA |
+| `/` | Public | Home — featured events, hosts, reviews |
 | `/events` | Public | Browse + filter events |
 | `/events/:id` | Public | Event detail, join, pay, review |
-| `/hosts` | Public | All verified hosts |
-| `/login` | Public | Login |
-| `/register` | Public | Register |
-| `/dashboard` | Auth | Role-based dashboard |
-| `/profile/:id` | Auth | Profile + edit |
-| `/saved` | Auth | Saved events |
-| `/events/create` | HOST | Create event |
+| `/events/create` | HOST | Create new event |
 | `/events/:id/edit` | HOST | Edit event |
-| `/admin` | ADMIN | Admin dashboard |
+| `/events/:id/analytics` | HOST | Event analytics |
+| `/hosts` | Public | All verified hosts |
+| `/reviews` | Public | All community reviews |
+| `/login` | Public | Login |
+| `/register` | Public | Register as USER or HOST |
+| `/forgot-password` | Public | Password recovery |
+| `/reset-password` | Public | Reset with token |
+| `/verify-email` | Public | Email verification |
+| `/verify-email-sent` | Public | Verification sent confirmation |
+| `/dashboard` | Auth | Role-based dashboard |
+| `/profile/:id` | Auth | User profile + edit |
+| `/saved` | Auth | Saved/bookmarked events |
+| `/admin` | ADMIN | Admin overview |
+| `/admin/users` | ADMIN | User management |
+| `/admin/hosts` | ADMIN | Host management |
+| `/admin/events` | ADMIN | Event moderation |
+| `/admin/host-verifications` | ADMIN | Host approval workflow |
+| `/admin/event-shield` | ADMIN | Event shield / moderation |
+| `/admin/system-logs` | ADMIN | System logs |
 
 ---
 

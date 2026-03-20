@@ -16,6 +16,10 @@ export const metadata: Metadata = {
   description: "Discover and host unforgettable local events. Connect with people who share your passions through EventMate.",
   keywords: ["events", "local events", "event hosting", "community", "eventmate"],
   authors: [{ name: "EventMate" }],
+  icons: {
+    icon: "/eventmate.png",
+    apple: "/eventmate.png",
+  },
   openGraph: {
     type: "website",
     url: "https://eventmate-client.onrender.com",
@@ -24,7 +28,7 @@ export const metadata: Metadata = {
     siteName: "EventMate",
     images: [
       {
-        url: "https://eventmate-client.onrender.com/og-image.png",
+        url: "https://eventmate-client.onrender.com/eventmate.png",
         width: 1200,
         height: 630,
         alt: "EventMate — Discover Local Events",
@@ -35,7 +39,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "EventMate — Your Next Favorite Memory Starts Here",
     description: "Discover and host unforgettable local events.",
-    images: ["https://eventmate-client.onrender.com/og-image.png"],
+    images: ["https://eventmate-client.onrender.com/eventmate.png"],
   },
 };
 

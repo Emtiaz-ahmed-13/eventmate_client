@@ -349,21 +349,45 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {reviewsData && reviewsData.length > 0 ? reviewsData.slice(0, 6).map((review: any) => (
-              <div key={review.id} className="p-8 rounded-[2rem] bg-slate-900/60 border border-white/5 hover:border-white/10 transition-all duration-500 group">
-                <div className="flex gap-1 mb-5">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} className={`w-3.5 h-3.5 ${s <= review.rating ? "text-amber-400 fill-amber-400" : "text-slate-700"}`} />
-                  ))}
+              <div key={review.id} className="p-8 rounded-[2rem] bg-slate-900/60 border border-white/5 hover:border-white/10 transition-all duration-500 group flex flex-col justify-between">
+                {/* Stars + comment */}
+                <div>
+                  <div className="flex gap-1 mb-5">
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star key={s} className={`w-3.5 h-3.5 ${s <= review.rating ? "text-amber-400 fill-amber-400" : "text-slate-700"}`} />
+                    ))}
+                  </div>
+                  <p className="text-slate-300 font-medium mb-6 leading-relaxed text-sm">"{review.comment || "Great experience!"}"</p>
                 </div>
-                <p className="text-slate-300 font-medium mb-6 leading-relaxed text-sm">"{review.comment || "Great experience!"}"</p>
-                <div className="flex items-center gap-3 pt-5 border-t border-white/5">
-                  <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-sm">
-                    {review.reviewer?.name?.[0] || "U"}
+
+                {/* Reviewer info */}
+                <div className="pt-5 border-t border-white/5 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-black text-sm overflow-hidden flex-shrink-0">
+                      {review.reviewer?.profile?.profileImage ? (
+                        <img src={review.reviewer.profile.profileImage} alt={review.reviewer.name} className="w-full h-full object-cover" />
+                      ) : (
+                        review.reviewer?.name?.[0] || "U"
+                      )}
+                    </div>
+                    <div>
+                      <h5 className="text-sm font-black text-white">{review.reviewer?.name || "EventMate User"}</h5>
+                      <p className="text-[10px] text-slate-600 uppercase tracking-widest font-bold">Reviewer</p>
+                    </div>
                   </div>
-                  <div>
-                    <h5 className="text-sm font-black text-white">{review.reviewer?.name || "EventMate User"}</h5>
-                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Reviewed {review.host?.name}</p>
-                  </div>
+
+                  {/* Host info */}
+                  {review.host && (
+                    <Link href={`/profile/${review.host.id}`} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/60 border border-white/5 hover:border-primary/20 transition-all group/host">
+                      <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-[10px] flex-shrink-0">
+                        {review.host.name?.[0]}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Reviewed Host</p>
+                        <p className="text-xs font-black text-primary truncate group-hover/host:text-white transition-colors">{review.host.name}</p>
+                      </div>
+                    </Link>
+                  )}
                 </div>
               </div>
             )) : (

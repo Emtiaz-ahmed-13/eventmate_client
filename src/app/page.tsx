@@ -350,7 +350,7 @@ export default function Home() {
               </span>
               <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">What People Say</h2>
             </div>
-            {totalReviews > 6 && (
+            {totalReviews > 0 && (
               <Link href="/reviews">
                 <Button variant="outline" className="border-white/10 text-slate-400 hover:text-white font-black gap-2 group rounded-xl">
                   View All ({totalReviews}) <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />

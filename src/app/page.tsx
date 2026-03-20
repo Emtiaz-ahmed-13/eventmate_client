@@ -261,7 +261,7 @@ export default function Home() {
                     <div className="flex justify-between items-center pt-4 border-t border-white/5">
                       <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
                         <Users className="w-4 h-4" />
-                        {event.participants?.length || 0}/{event.maxParticipants} joined
+                        {event._count?.participants ?? event.participants?.length ?? 0}/{event.maxParticipants} joined
                       </div>
                       <Link href={`/events/${event.id}`}>
                         <Button size="sm" variant="glow" className="rounded-xl font-black text-xs px-5">Join</Button>

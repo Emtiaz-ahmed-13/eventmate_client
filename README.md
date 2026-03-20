@@ -1,7 +1,7 @@
 # EventMate — Client
 
 <p align="center">
-  <img src="public/eventmate.png" alt="EventMate Logo" width="120" />
+  <img src="public/eventmate.png" alt="EventMate Logo" width="600" />
 </p>
 
 <p align="center">

@@ -10,8 +10,8 @@
 </p>
 
 <p align="center">
-  <a href="https://eventmate-client.onrender.com">🌐 Live App</a> &nbsp;|&nbsp;
-  <a href="https://eventmate-server-5.onrender.com/api/v1">⚙️ Backend API</a>
+  <a href="https://eventmate-client-1.onrender.com/">🌐 Live App</a> &nbsp;|&nbsp;
+  <a href="https://eventmate-server-5.onrender.com/">⚙️ Backend API</a>
 </p>
 
 ---

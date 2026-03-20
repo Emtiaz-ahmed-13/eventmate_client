@@ -11,6 +11,6 @@ export const ReviewServices = {
   },
   getAllReviews: async (limit = 6) => {
     const response = await api.get(`/reviews?limit=${limit}`);
-    return response.data.data;
+    return response.data.data; // { reviews, total }
   },
 };

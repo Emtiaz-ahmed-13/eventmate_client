@@ -64,6 +64,9 @@ export default function Home() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const reviews = reviewsData?.reviews ?? [];
+  const totalReviews = reviewsData?.total ?? 0;
+
   const events = React.useMemo(() => {
     if (!eventsResponse) return [];
     if (Array.isArray(eventsResponse)) return eventsResponse;
@@ -340,15 +343,24 @@ export default function Home() {
       {/* ── TESTIMONIALS ── */}
       <section className="py-28 relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-4 block flex items-center justify-center gap-2">
-              <MessageSquare className="w-3 h-3" /> Reviews
-            </span>
-            <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">What People Say</h2>
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+            <div className="text-center md:text-left">
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-4 block flex items-center gap-2">
+                <MessageSquare className="w-3 h-3" /> Reviews
+              </span>
+              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">What People Say</h2>
+            </div>
+            {totalReviews > 6 && (
+              <Link href="/reviews">
+                <Button variant="outline" className="border-white/10 text-slate-400 hover:text-white font-black gap-2 group rounded-xl">
+                  View All ({totalReviews}) <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {reviewsData && reviewsData.length > 0 ? reviewsData.slice(0, 6).map((review: any) => (
+            {reviews.length > 0 ? reviews.slice(0, 6).map((review: any) => (
               <div key={review.id} className="p-8 rounded-[2rem] bg-slate-900/60 border border-white/5 hover:border-white/10 transition-all duration-500 group flex flex-col justify-between">
                 {/* Stars + comment */}
                 <div>
@@ -376,18 +388,31 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Host info */}
-                  {review.host && (
-                    <Link href={`/profile/${review.host.id}`} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/60 border border-white/5 hover:border-primary/20 transition-all group/host">
-                      <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-[10px] flex-shrink-0">
-                        {review.host.name?.[0]}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Reviewed Host</p>
-                        <p className="text-xs font-black text-primary truncate group-hover/host:text-white transition-colors">{review.host.name}</p>
-                      </div>
-                    </Link>
-                  )}
+                  {/* Host + Event info */}
+                  <div className="space-y-2">
+                    {review.host && (
+                      <Link href={`/profile/${review.host.id}`} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/60 border border-white/5 hover:border-primary/20 transition-all group/host">
+                        <div className="w-6 h-6 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-[10px] flex-shrink-0">
+                          {review.host.name?.[0]}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Host</p>
+                          <p className="text-xs font-black text-primary truncate group-hover/host:text-white transition-colors">{review.host.name}</p>
+                        </div>
+                      </Link>
+                    )}
+                    {review.event && (
+                      <Link href={`/events/${review.event.id}`} className="flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/60 border border-white/5 hover:border-amber-400/20 transition-all group/event">
+                        <div className="w-6 h-6 rounded-lg bg-amber-400/10 flex items-center justify-center flex-shrink-0">
+                          <Calendar className="w-3 h-3 text-amber-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Event</p>
+                          <p className="text-xs font-black text-amber-400 truncate group-hover/event:text-white transition-colors">{review.event.name}</p>
+                        </div>
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             )) : (

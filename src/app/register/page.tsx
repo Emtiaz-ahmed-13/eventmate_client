@@ -47,8 +47,8 @@ function RegisterContent() {
     try {
       const response = await AuthServices.register(data);
       if (response.success) {
-        toast.success("Registration successful! Please check your email.");
-        router.push(`/verify-email-sent?email=${encodeURIComponent(data.email)}`);
+        toast.success("Registration successful! You can now login.");
+        router.push("/login");
       }
     } catch (err: any) {
       const errorMessage =

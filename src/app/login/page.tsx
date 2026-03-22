@@ -45,18 +45,7 @@ export default function LoginPage() {
       }
     } catch (err: any) {
       const errorMessage = err.response?.data?.message || "Something went wrong. Please try again.";
-      const statusCode = err.response?.status;
-
-      // Check if it's an email verification error (403 or message contains verify/email)
-      if (statusCode === 403 || errorMessage.toLowerCase().includes('verify')) {
-        setError("Please verify your email before logging in.");
-        toast.error("Email not verified. Redirecting...", { duration: 3000 });
-        setTimeout(() => {
-          router.push(`/verify-email-sent?email=${encodeURIComponent(data.email)}`);
-        }, 3000);
-      } else {
-        setError(errorMessage);
-      }
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }

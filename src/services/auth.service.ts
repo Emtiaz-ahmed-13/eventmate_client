@@ -37,13 +37,6 @@ export const AuthService = {
     });
     return response.data;
   },
-  resendVerificationEmail: async (email: string) => {
-    const response = await api.post("/auth/resend-verification", { email }, {
-      timeout: 10000,
-    });
-    return response.data;
-  },
 };
 
-// ✅ দুটো নামেই export করো — backward compatible
 export const AuthServices = AuthService;

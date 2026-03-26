@@ -37,22 +37,61 @@ export default function EventsPage() {
   const [location, setLocation] = useState("");
   const [dateRange, setDateRange] = useState("");
   const [paidOnly, setPaidOnly] = useState(false);
+  const [minPrice, setMinPrice] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [sortBy, setSortBy] = useState("date");
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [useNearMe, setUseNearMe] = useState(false);
+  const [radius, setRadius] = useState("50"); // km
   const [page, setPage] = useState(1);
   const LIMIT = 8;
 
+  // Get user's location
+  const getUserLocation = () => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+          setUseNearMe(true);
+          setPage(1);
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+          alert("Unable to get your location. Please enable location services.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
+
   const { data: eventsResponse, isLoading, error } = useQuery({
-    queryKey: ["events", searchTerm, selectedCategory, location, dateRange, paidOnly, page],
+    queryKey: ["events", searchTerm, selectedCategory, location, dateRange, paidOnly, minPrice, maxPrice, sortBy, useNearMe, userLocation, radius, page],
     queryFn: async () => {
       try {
-        const response = await EventServices.getAllEvents({ 
+        const params: any = { 
           searchTerm: searchTerm || undefined, 
           type: selectedCategory || undefined,
           location: location || undefined,
           dateRange: dateRange || undefined,
           paidOnly: paidOnly || undefined,
+          minPrice: minPrice || undefined,
+          maxPrice: maxPrice || undefined,
+          sortBy: sortBy || undefined,
           page,
           limit: LIMIT,
-        });
+        };
+
+        if (useNearMe && userLocation) {
+          params.latitude = userLocation.lat;
+          params.longitude = userLocation.lng;
+          params.radius = radius;
+        }
+
+        const response = await EventServices.getAllEvents(params);
         return response;
       } catch (error) {
         console.error('Error fetching events:', error);
@@ -127,6 +166,33 @@ export default function EventsPage() {
                   <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.3em] mb-10">Refine Search</h3>
                   
                   <div className="space-y-12">
+                     {/* Near Me Button */}
+                     <button
+                        onClick={getUserLocation}
+                        className={`w-full p-4 rounded-xl font-black text-xs uppercase tracking-widest transition-all border ${useNearMe ? 'border-primary bg-primary/10 text-primary' : 'border-white/5 bg-slate-800/50 text-slate-400 hover:text-white hover:border-white/10'}`}
+                     >
+                        📍 {useNearMe ? 'Near Me Active' : 'Find Events Near Me'}
+                     </button>
+
+                     {useNearMe && (
+                        <div className="space-y-4">
+                           <label className="flex items-center justify-between text-xs font-black text-slate-400 uppercase tracking-widest">
+                              Radius (km)
+                           </label>
+                           <select
+                              value={radius}
+                              onChange={(e) => { setRadius(e.target.value); setPage(1); }}
+                              className="w-full p-4 bg-slate-800/50 border border-white/5 rounded-xl text-sm font-bold appearance-none cursor-pointer text-white outline-none focus:ring-1 focus:ring-primary/40"
+                           >
+                              <option value="5" className="bg-slate-900">5 km</option>
+                              <option value="10" className="bg-slate-900">10 km</option>
+                              <option value="25" className="bg-slate-900">25 km</option>
+                              <option value="50" className="bg-slate-900">50 km</option>
+                              <option value="100" className="bg-slate-900">100 km</option>
+                           </select>
+                        </div>
+                     )}
+
                      <div className="space-y-4">
                         <label className="flex items-center justify-between text-xs font-black text-slate-400 uppercase tracking-widest">
                            Location
@@ -137,7 +203,8 @@ export default function EventsPage() {
                            placeholder="e.g. New York, Online..."
                            value={location}
                            onChange={(e) => { setLocation(e.target.value); setPage(1); }}
-                           className="w-full p-4 bg-slate-800/50 border border-white/5 rounded-xl text-sm font-bold text-white placeholder:text-slate-600 outline-none focus:ring-1 focus:ring-primary/40"
+                           disabled={useNearMe}
+                           className="w-full p-4 bg-slate-800/50 border border-white/5 rounded-xl text-sm font-bold text-white placeholder:text-slate-600 outline-none focus:ring-1 focus:ring-primary/40 disabled:opacity-50"
                         />
                      </div>
 
@@ -158,6 +225,28 @@ export default function EventsPage() {
                         </select>
                      </div>
 
+                     <div className="space-y-4">
+                        <label className="text-xs font-black text-slate-400 uppercase tracking-widest">
+                           Price Range
+                        </label>
+                        <div className="flex gap-2">
+                           <input
+                              type="number"
+                              placeholder="Min"
+                              value={minPrice}
+                              onChange={(e) => { setMinPrice(e.target.value); setPage(1); }}
+                              className="w-full p-4 bg-slate-800/50 border border-white/5 rounded-xl text-sm font-bold text-white placeholder:text-slate-600 outline-none focus:ring-1 focus:ring-primary/40"
+                           />
+                           <input
+                              type="number"
+                              placeholder="Max"
+                              value={maxPrice}
+                              onChange={(e) => { setMaxPrice(e.target.value); setPage(1); }}
+                              className="w-full p-4 bg-slate-800/50 border border-white/5 rounded-xl text-sm font-bold text-white placeholder:text-slate-600 outline-none focus:ring-1 focus:ring-primary/40"
+                           />
+                        </div>
+                     </div>
+
                      <div className="pt-8 border-t border-white/5 space-y-4">
                         <div className="flex items-center justify-between">
                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Paid Events</span>
@@ -170,9 +259,17 @@ export default function EventsPage() {
                         </div>
                      </div>
 
-                     {(location || dateRange || paidOnly) && (
+                     {(location || dateRange || paidOnly || minPrice || maxPrice || useNearMe) && (
                         <button
-                           onClick={() => { setLocation(""); setDateRange(""); setPaidOnly(false); setPage(1); }}
+                           onClick={() => { 
+                              setLocation(""); 
+                              setDateRange(""); 
+                              setPaidOnly(false); 
+                              setMinPrice("");
+                              setMaxPrice("");
+                              setUseNearMe(false);
+                              setPage(1); 
+                           }}
                            className="w-full text-[10px] font-black uppercase tracking-widest text-red-400 hover:text-red-300 transition-colors"
                         >
                            Clear Filters
@@ -186,11 +283,18 @@ export default function EventsPage() {
             <div className="flex-1 space-y-10 pb-20">
                <div className="flex justify-between items-center bg-slate-900/40 p-4 rounded-2xl border border-white/5">
                   <p className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Showing <span className="text-white">{events?.length || 0}</span> events discovered</p>
-                  <Button variant="ghost" className="flex gap-2 font-black uppercase tracking-widest text-[10px] text-slate-400 hover:text-white">
-                     <ArrowUpDown className="w-4 h-4" />
-                     Sort by: Date
-                     <ChevronDown className="w-4 h-4" />
-                  </Button>
+                  <select
+                     value={sortBy}
+                     onChange={(e) => { setSortBy(e.target.value); setPage(1); }}
+                     className="flex gap-2 font-black uppercase tracking-widest text-[10px] text-slate-400 bg-transparent border border-white/5 rounded-xl px-4 py-2 cursor-pointer hover:text-white hover:border-white/10 outline-none"
+                  >
+                     <option value="date" className="bg-slate-900">Sort by: Date</option>
+                     <option value="popularity" className="bg-slate-900">Sort by: Popularity</option>
+                     <option value="rating" className="bg-slate-900">Sort by: Rating</option>
+                     <option value="price-low" className="bg-slate-900">Sort by: Price (Low)</option>
+                     <option value="price-high" className="bg-slate-900">Sort by: Price (High)</option>
+                     {useNearMe && <option value="distance" className="bg-slate-900">Sort by: Distance</option>}
+                  </select>
                </div>
 
                {isLoading ? (
@@ -256,10 +360,22 @@ export default function EventsPage() {
                               </div>
                            </div>
                            <div className="p-8 flex-1 flex flex-col">
-                              <div className="flex items-center gap-3 mb-5 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em]">
+                              <div className="flex items-center gap-3 mb-5 text-slate-500 text-[10px] font-black uppercase tracking-[0.2em] flex-wrap">
                                  <div className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5 text-primary" /> <span>{new Date(event.dateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span></div>
                                  <span className="opacity-20">|</span>
                                  <div className="flex items-center gap-1.5 truncate max-w-[120px]"><MapPin className="w-3.5 h-3.5 text-primary" /> <span>{event.location}</span></div>
+                                 {event.distance && (
+                                    <>
+                                       <span className="opacity-20">|</span>
+                                       <div className="flex items-center gap-1.5 text-primary">📍 {event.distance} km</div>
+                                    </>
+                                 )}
+                                 {event.avgRating > 0 && (
+                                    <>
+                                       <span className="opacity-20">|</span>
+                                       <div className="flex items-center gap-1.5 text-amber-400">⭐ {event.avgRating}</div>
+                                    </>
+                                 )}
                               </div>
                               <h3 className="text-2xl font-black text-white mb-4 group-hover:text-primary transition-colors leading-tight tracking-tight">
                                  {event.name}

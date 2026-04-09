@@ -75,4 +75,8 @@ export const EventServices = {
     const response = await api.patch(`/events/${eventId}/participants/${userId}/undo-checkin`);
     return response.data.data;
   },
+  verifyTicket: async (eventId: string, ticketId: string) => {
+    const response = await api.patch(`/events/${eventId}/participants/verify/${ticketId}`);
+    return response.data.data;
+  },
 };

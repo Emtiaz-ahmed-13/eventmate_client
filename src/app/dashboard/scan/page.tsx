@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { EventServices } from "@/services/event.service";
 
 function ScannerContent() {
   const searchParams = useSearchParams();
@@ -41,16 +42,20 @@ function ScannerContent() {
   }, [eventId]);
 
   const handleVerify = async (ticketId: string) => {
+    if (!eventId) return;
     setIsLoading(true);
     try {
-      // Mock result for now, will connect to API in next commit
-      console.log("Verifying ticket:", ticketId);
-      toast.info(`Ticket scanned: ${ticketId}`);
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      setScanResult({ success: true, participant: { name: "Sample User" } });
+      const result = await EventServices.verifyTicket(eventId, ticketId);
+      setScanResult(result);
+      if (result.alreadyCheckedIn) {
+        toast.warning("Participant already checked in!");
+      } else {
+        toast.success("Ticket verified!");
+      }
     } catch (error: any) {
-      toast.error("Verification failed");
+      console.error(error);
+      const message = error.response?.data?.message || "Verification failed";
+      toast.error(message);
       setScanResult({ success: false });
     } finally {
       setIsLoading(false);

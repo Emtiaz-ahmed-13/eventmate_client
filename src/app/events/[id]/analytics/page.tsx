@@ -112,6 +112,14 @@ export default function EventAnalyticsPage() {
               })}
             </p>
           </div>
+          <div className="ml-auto">
+            <Link href={`/dashboard/scan?eventId=${id}`}>
+              <Button className="rounded-xl font-black uppercase text-[10px] tracking-widest gap-2 bg-white text-slate-900 hover:bg-slate-200">
+                <QrCode className="w-3 h-3" />
+                Scan Tickets
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Stats Grid */}

@@ -30,6 +30,7 @@ import { useParams } from "next/navigation";
 import { toast } from "sonner";
 import StripeProvider from "@/components/providers/StripeProvider";
 import PaymentForm from "@/components/PaymentForm";
+import { TicketDisplay } from "@/components/TicketDisplay";
 
 export default function EventDetails() {
    const { id } = useParams();
@@ -540,6 +541,19 @@ export default function EventDetails() {
                            <Link href="/login" className="block w-full">
                               <Button variant="glow" className="w-full h-16 rounded-2xl font-black uppercase tracking-widest text-xs">Authorize to Join</Button>
                            </Link>
+                        )}
+
+                        {isAuthenticated && participantStatus === 'APPROVED' && (
+                           <div className="mt-10 pt-10 border-t border-white/5">
+                              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-6">Your Entry Ticket</span>
+                              <TicketDisplay 
+                                 eventName={event.name}
+                                 userName={user?.name || "Guest"}
+                                 date={event.dateTime}
+                                 location={event.location}
+                                 ticketId={event.participants.find((p: any) => p.userId === user?.id)?.ticketId}
+                              />
+                           </div>
                         )}
 
                         <div className="mt-12 pt-10 border-t border-white/5">

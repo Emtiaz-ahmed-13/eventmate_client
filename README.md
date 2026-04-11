@@ -76,6 +76,12 @@
 - Bell icon with unread count badge
 - Notification dropdown in navbar
 
+### Ticketing & QR Code
+- Automatic PDF ticket generation
+- Unique QR code per participant
+- Email delivery of tickets with attachments
+- Host-side QR scanner for fast check-ins
+
 ### Admin Dashboard
 - Real analytics (users, hosts, events, revenue)
 - Manage users — ban, role change, delete

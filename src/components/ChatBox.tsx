@@ -18,11 +18,43 @@ interface Message {
   createdAt: string;
 }
 
+import { getSocket } from "@/lib/socket";
+import { ChatServices } from "@/services/chat.service";
+
 export const ChatBox = ({ eventId }: { eventId: string }) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const { user } = useAuthStore();
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Fetch initial messages
+    const fetchMessages = async () => {
+      try {
+        const data = await ChatServices.getEventMessages(eventId);
+        setMessages(data);
+      } catch (error) {
+        console.error("Failed to fetch messages", error);
+      }
+    };
+
+    fetchMessages();
+
+    // Socket.io integration
+    const socket = getSocket();
+    if (!socket.connected) socket.connect();
+
+    socket.emit("join-chat", eventId);
+
+    socket.on("new-message", (message: Message) => {
+      setMessages((prev) => [...prev, message]);
+    });
+
+    return () => {
+      socket.emit("leave-chat", eventId);
+      socket.off("new-message");
+    };
+  }, [eventId]);
 
   useEffect(() => {
     // Scroll to bottom on new messages
@@ -34,7 +66,7 @@ export const ChatBox = ({ eventId }: { eventId: string }) => {
     if (!newMessage.trim()) return;
 
     try {
-      // This will be connected to API and Socket in the next commit
+      await ChatServices.sendMessage(eventId, newMessage);
       setNewMessage("");
     } catch (error) {
       toast.error("Failed to send message");

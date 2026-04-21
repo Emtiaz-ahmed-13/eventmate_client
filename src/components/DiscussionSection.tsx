@@ -19,20 +19,54 @@ interface Discussion {
   createdAt: string;
 }
 
+import { useEffect } from "react";
+import { DiscussionServices } from "@/services/discussion.service";
+
 export const DiscussionSection = ({ eventId, isHost }: { eventId: string; isHost: boolean }) => {
   const [discussions, setDiscussions] = useState<Discussion[]>([]);
   const [newQuestion, setNewQuestion] = useState("");
+  const [answers, setAnswers] = useState<{ [key: string]: string }>({});
   const { user } = useAuthStore();
+
+  useEffect(() => {
+    const fetchDiscussions = async () => {
+      try {
+        const data = await DiscussionServices.getEventDiscussions(eventId);
+        setDiscussions(data);
+      } catch (error) {
+        console.error("Failed to fetch discussions", error);
+      }
+    };
+    fetchDiscussions();
+  }, [eventId]);
 
   const handlePostQuestion = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newQuestion.trim()) return;
 
     try {
-      // API will be connected in next commit
+      const data = await DiscussionServices.createQuestion(eventId, newQuestion);
+      setDiscussions((prev) => [data, ...prev]);
       setNewQuestion("");
+      toast.success("Question posted!");
     } catch (error) {
       toast.error("Failed to post question");
+    }
+  };
+
+  const handleAnswerQuestion = async (discussionId: string) => {
+    const answer = answers[discussionId];
+    if (!answer?.trim()) return;
+
+    try {
+      await DiscussionServices.answerQuestion(discussionId, answer);
+      setDiscussions((prev) =>
+        prev.map((d) => (d.id === discussionId ? { ...d, answer } : d))
+      );
+      setAnswers((prev) => ({ ...prev, [discussionId]: "" }));
+      toast.success("Answer posted!");
+    } catch (error) {
+      toast.error("Failed to post answer");
     }
   };
 
@@ -105,9 +139,14 @@ export const DiscussionSection = ({ eventId, isHost }: { eventId: string; isHost
                 <div className="ml-10 space-y-3">
                   <textarea
                     placeholder="Type your answer..."
+                    value={answers[d.id] || ""}
+                    onChange={(e) => setAnswers((prev) => ({ ...prev, [d.id]: e.target.value }))}
                     className="w-full h-20 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all resize-none text-zinc-900 dark:text-white"
                   />
-                  <button className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors">
+                  <button 
+                    onClick={() => handleAnswerQuestion(d.id)}
+                    className="bg-blue-600 text-white px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-blue-700 transition-colors"
+                  >
                     Reply
                   </button>
                 </div>

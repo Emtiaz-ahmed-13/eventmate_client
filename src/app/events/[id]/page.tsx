@@ -31,6 +31,9 @@ import { toast } from "sonner";
 import StripeProvider from "@/components/providers/StripeProvider";
 import PaymentForm from "@/components/PaymentForm";
 import { TicketDisplay } from "@/components/TicketDisplay";
+import { ChatBox } from "@/components/ChatBox";
+import { DiscussionSection } from "@/components/DiscussionSection";
+import { FollowButton } from "@/components/FollowButton";
 
 export default function EventDetails() {
    const { id } = useParams();
@@ -351,6 +354,15 @@ export default function EventDetails() {
                      </CardContent>
                   </Card>
 
+                  {/* Social Features */}
+                  {isAuthenticated && (participantStatus === "APPROVED" || isHost) && (
+                     <div className="space-y-6">
+                        <ChatBox eventId={event.id} />
+                     </div>
+                  )}
+
+                  <DiscussionSection eventId={event.id} isHost={isHost} />
+
                   {/* Review Form — shown to approved participants */}
                   {isAuthenticated && !isHost && participantStatus === "APPROVED" && (
                      <Card className="border border-white/5 shadow-premium bg-slate-900/40 backdrop-blur-xl p-2">
@@ -564,10 +576,11 @@ export default function EventDetails() {
                               </div>
                               <div className="flex-1">
                                  <h4 className="font-black text-white text-lg leading-tight mb-1">{event.host?.name || "Premium Host"}</h4>
-                                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+                                 <div className="flex items-center gap-1.5 text-xs font-bold text-slate-500 mb-3">
                                     <div className="px-1.5 py-0 rounded animate-pulse w-2 h-2 bg-primary shadow-[0_0_10px_rgba(16,185,129,1)]" />
                                     VERIFIED PRO
                                  </div>
+                                 <FollowButton hostId={event.hostId} />
                               </div>
                               <Button variant="outline" size="icon" className="text-slate-200 hover:text-primary transition-colors border-white/10">
                                  <Mail className="w-5 h-5" />

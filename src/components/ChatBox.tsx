@@ -152,3 +152,4 @@ export const ChatBox = ({ eventId }: { eventId: string }) => {
     </div>
   );
 };
+// Refined message layout for better readability

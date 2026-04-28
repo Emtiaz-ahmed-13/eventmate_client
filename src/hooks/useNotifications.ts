@@ -40,3 +40,4 @@ export const useNotifications = (userId: string | undefined) => {
 
   return { notifications, unreadCount, markAllRead };
 };
+// Optimized socket connection management

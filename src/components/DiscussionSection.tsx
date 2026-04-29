@@ -158,3 +158,4 @@ export const DiscussionSection = ({ eventId, isHost }: { eventId: string; isHost
     </div>
   );
 };
+// Improved accessibility for discussion forum

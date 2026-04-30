@@ -82,6 +82,12 @@
 - Email delivery of tickets with attachments
 - Host-side QR scanner for fast check-ins
 
+### Communication & Social
+- **Real-time Event Chat**: Dedicated group chat for participants and host.
+- **Discussion Forum**: Public Q&A section for event-specific inquiries.
+- **Follow Host**: Follow your favorite hosts to get notified about new events.
+- **Real-time Notifications**: Instant alerts for new messages, events, and replies.
+
 ### Admin Dashboard
 - Real analytics (users, hosts, events, revenue)
 - Manage users — ban, role change, delete

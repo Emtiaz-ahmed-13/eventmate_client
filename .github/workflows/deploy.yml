@@ -1,0 +1,67 @@
+name: Client CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build client
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL || 'http://localhost/api/v1' }}
+
+  deploy:
+    name: Deploy client to EC2
+    needs: [build]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      EC2_APP_DIR: ${{ secrets.EC2_APP_DIR || '/home/ubuntu/eventmate' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/eventmate_ec2_key
+          chmod 600 ~/.ssh/eventmate_ec2_key
+          ssh-keyscan -H "${{ secrets.EC2_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Sync client code
+        run: |
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/eventmate_ec2_key" \
+            --exclude ".env" \
+            --exclude ".env.local" \
+            --exclude ".git" \
+            --exclude "node_modules" \
+            --exclude ".next" \
+            ./ "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${EC2_APP_DIR}/eventmate_client/"
+
+      - name: Rebuild and restart client
+        run: |
+          ssh -i ~/.ssh/eventmate_ec2_key "${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}" \
+            "EC2_APP_DIR='${EC2_APP_DIR}' bash -s" <<'EOF'
+          set -e
+          cd "${EC2_APP_DIR:-/home/ubuntu/eventmate}"
+          docker compose -f docker-compose.prod.yml build client
+          docker compose -f docker-compose.prod.yml up -d client nginx
+          docker compose -f docker-compose.prod.yml ps
+          EOF

@@ -1,245 +1,195 @@
-# EventMate — Client
+# EventMate Client
 
 <p align="center">
-  <img src="public/eventmate.png" alt="EventMate Logo" width="600" />
+  <img src="public/eventmate.png" alt="EventMate logo" width="600" />
 </p>
 
 <p align="center">
-  <strong>Discover and host unforgettable local events.</strong><br/>
-  Connect with people who share your passions through EventMate.
+  <strong>Next.js frontend for discovering, hosting, joining, and managing local events.</strong>
 </p>
 
 <p align="center">
-  <a href="https://eventmate-client-1.onrender.com/">🌐 Live App</a> &nbsp;|&nbsp;
-  <a href="https://eventmate-server-5.onrender.com/">⚙️ Backend API</a>
+  <a href="https://eventmate-client-1.onrender.com/">Live App</a> |
+  <a href="https://eventmate-server-5.onrender.com/">Backend API</a> |
+  <a href="../eventmate_server/README.md">Server README</a>
 </p>
 
----
+## Overview
+
+EventMate Client is the web application for the EventMate platform. It provides public event discovery, role-based dashboards, host event management, Stripe-powered paid joins, QR ticket scanning, reviews, real-time notifications, event chat, discussions, and admin moderation tools.
 
 ## Tech Stack
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 16 (App Router) |
+| Area | Technology |
+| --- | --- |
+| Framework | Next.js 16 App Router |
 | Language | TypeScript |
-| Styling | Tailwind CSS v4 |
-| UI Components | Shadcn UI + Radix UI |
-| State Management | Zustand |
-| Server State | TanStack React Query v5 |
-| HTTP Client | Axios |
-| Forms | React Hook Form + Zod |
-| Payments | Stripe (React Stripe.js) |
-| Real-time | Socket.io Client |
-| Notifications | Sonner (toast) |
+| UI | React 19, Tailwind CSS v4, shadcn/ui, Radix UI |
+| Data fetching | Axios, TanStack React Query |
+| State | Zustand |
+| Forms and validation | React Hook Form, Zod |
+| Payments | Stripe React SDK |
+| Real-time | Socket.IO Client |
+| Notifications | Sonner |
 | Icons | Lucide React |
-| Fonts | Outfit (Google Fonts) |
-
----
 
 ## Features
 
-### Auth
-- JWT login with access + refresh tokens
-- Email verification on register
-- Forgot / reset password flow
-- Persistent auth state via Zustand
+- Public home page with featured events, hosts, reviews, and calls to action.
+- Authentication pages for login, registration, forgot password, and reset password.
+- Event browsing with search, category, location, date range, paid-only filters, and pagination.
+- Host tools for creating, editing, duplicating, cancelling, deleting, and analyzing events.
+- User flows for joining free or paid events, saving events, viewing tickets, and reviewing hosts.
+- Participant management with approval, rejection, waitlist, check-in, undo check-in, and QR ticket scan.
+- Stripe Elements integration for paid events.
+- Real-time notifications through Socket.IO.
+- Event-specific chat and public discussion/Q&A.
+- Host follow system and verified host discovery.
+- Admin dashboard for users, hosts, events, host verification, event moderation, analytics, and system logs.
 
-### Events
-- Browse with search, category, location, date range, paid-only filters
-- Create events with image upload via ImageKit (HOST)
-- Edit, cancel, delete own events (HOST)
-- Duplicate event (HOST)
-- Join free or paid events (Stripe payment flow)
-- Approval-required events — pending / approved / rejected status
-- Save / bookmark events
-- Event analytics dashboard (HOST)
+## Prerequisites
 
-### Participants (HOST)
-- View all participants per event
-- Approve or reject pending join requests
-- Check-in / undo check-in participants
-- Waitlist management
-
-### Payments
-- Stripe Elements integration
-- Payment intent created server-side
-- Confirmed server-side after Stripe success
-
-### Reviews
-- Approved participants can rate and review the host
-- Shows reviewer name, host name, and event name
-- Star ratings with average score on host profile
-- All reviews page with load more pagination
-
-### Notifications
-- Real-time via Socket.io
-- Bell icon with unread count badge
-- Notification dropdown in navbar
-
-### Ticketing & QR Code
-- Automatic PDF ticket generation
-- Unique QR code per participant
-- Email delivery of tickets with attachments
-- Host-side QR scanner for fast check-ins
-
-### Communication & Social
-- **Real-time Event Chat**: Dedicated group chat for participants and host.
-- **Discussion Forum**: Public Q&A section for event-specific inquiries.
-- **Follow Host**: Follow your favorite hosts to get notified about new events.
-- **Real-time Notifications**: Instant alerts for new messages, events, and replies.
-
-### Admin Dashboard
-- Real analytics (users, hosts, events, revenue)
-- Manage users — ban, role change, delete
-- Host verification workflow
-- Event moderation (event-shield)
-- System logs
-
----
+- Node.js 20 or later
+- npm
+- Running EventMate Server instance
+- Stripe publishable key for paid-event checkout
 
 ## Getting Started
 
-### 1. Clone & Install
+Install dependencies:
 
 ```bash
-git clone <repo-url>
 cd eventmate_client
 npm install
 ```
-
-### 2. Environment Variables
 
 Create `.env.local`:
 
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:5001/api/v1
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
 ```
 
-### 3. Run
+Run the development server:
 
 ```bash
-npm run dev       # Development (Turbopack)
-npm run build     # Production build
-npm start         # Start production server
+npm run dev
 ```
 
-App runs on `http://localhost:3000`
+The app will be available at `http://localhost:3000`.
 
----
+## Available Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start the Next.js development server with Turbopack |
+| `npm run build` | Build the production app |
+| `npm start` | Start the production server after building |
+
+## Environment Variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXT_PUBLIC_API_URL` | Yes | Backend API base URL, for example `http://localhost:5001/api/v1` |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Yes | Stripe publishable key used by Stripe Elements |
 
 ## Project Structure
 
 ```text
-src/
-├── app/
-│   ├── page.tsx                    # Home — events, hosts, reviews, CTA
-│   ├── layout.tsx                  # Root layout + metadata + favicon
-│   ├── login/
-│   ├── register/
-│   ├── forgot-password/
-│   ├── reset-password/
-│   ├── verify-email/
-│   ├── verify-email-sent/
-│   ├── dashboard/                  # Role-based dashboard
-│   ├── reviews/                    # All reviews page
-│   ├── events/
-│   │   ├── page.tsx                # Browse events + filters
-│   │   ├── create/                 # Create event (HOST)
-│   │   └── [id]/
-│   │       ├── page.tsx            # Event detail + join/pay/review
-│   │       ├── edit/               # Edit event (HOST)
-│   │       └── analytics/          # Event analytics (HOST)
-│   ├── profile/[id]/               # User profile + reviews
-│   ├── saved/                      # Bookmarked events
-│   ├── hosts/                      # Browse all verified hosts
-│   └── admin/
-│       ├── page.tsx                # Admin dashboard
-│       ├── users/                  # User management
-│       ├── hosts/                  # Host management
-│       ├── events/                 # Event moderation
-│       ├── host-verifications/     # Host approval workflow
-│       ├── event-shield/           # Event moderation shield
-│       └── system-logs/            # System logs
-├── components/
-│   ├── Navbar.tsx
-│   ├── PaymentForm.tsx
-│   └── providers/
-├── services/                       # API layer (Axios)
-│   ├── auth.service.ts
-│   ├── event.service.ts
-│   ├── user.service.ts
-│   ├── review.service.ts
-│   ├── payment.service.ts
-│   ├── admin.service.ts
-│   └── analytics.service.ts
-├── store/
-│   └── auth.store.ts               # Zustand auth
-├── hooks/
-│   └── useNotifications.ts         # Socket.io notifications
-└── lib/
-    ├── api.ts                      # Axios instance + interceptors
-    └── socket.ts                   # Socket.io singleton
+eventmate_client/
+|-- public/                 Static assets and EventMate logo
+|-- src/
+|   |-- app/                Next.js App Router pages and layouts
+|   |-- components/         Reusable UI and feature components
+|   |-- hooks/              Client hooks, including notifications
+|   |-- lib/                Axios and Socket.IO clients
+|   |-- services/           API service modules
+|   |-- store/              Zustand stores
+|   `-- components/ui/      Shared UI primitives
+|-- Dockerfile              Production Docker image
+|-- render.yaml             Render service config
+|-- next.config.ts          Next.js config
+`-- package.json            Scripts and dependencies
 ```
 
----
+## Main Routes
 
-## Pages
+| Route | Access | Purpose |
+| --- | --- | --- |
+| `/` | Public | Landing page |
+| `/events` | Public | Browse and filter events |
+| `/events/[id]` | Public/Auth | Event details, join, pay, review, chat, and discussion |
+| `/events/create` | Host/Admin | Create an event |
+| `/events/[id]/edit` | Host/Admin | Edit an event |
+| `/events/[id]/analytics` | Host/Admin | Event analytics |
+| `/dashboard` | Auth | Role-based user dashboard |
+| `/dashboard/scan` | Host/Admin | QR ticket scanner |
+| `/saved` | Auth | Saved events |
+| `/hosts` | Public | Verified hosts |
+| `/reviews` | Public | Community reviews |
+| `/profile/[id]` | Public/Auth | User or host profile |
+| `/admin` | Admin | Admin overview |
+| `/admin/users` | Admin | User management |
+| `/admin/hosts` | Admin | Host management |
+| `/admin/events` | Admin | Event management |
+| `/admin/host-verifications` | Admin | Host approval workflow |
+| `/admin/event-shield` | Admin | Event moderation shield |
+| `/admin/system-logs` | Admin | System logs |
 
-| Route | Access | Description |
-|---|---|---|
-| `/` | Public | Home — featured events, hosts, reviews |
-| `/events` | Public | Browse + filter events |
-| `/events/:id` | Public | Event detail, join, pay, review |
-| `/events/create` | HOST | Create new event |
-| `/events/:id/edit` | HOST | Edit event |
-| `/events/:id/analytics` | HOST | Event analytics |
-| `/hosts` | Public | All verified hosts |
-| `/reviews` | Public | All community reviews |
-| `/login` | Public | Login |
-| `/register` | Public | Register as USER or HOST |
-| `/forgot-password` | Public | Password recovery |
-| `/reset-password` | Public | Reset with token |
-| `/verify-email` | Public | Email verification |
-| `/verify-email-sent` | Public | Verification sent confirmation |
-| `/dashboard` | Auth | Role-based dashboard |
-| `/profile/:id` | Auth | User profile + edit |
-| `/saved` | Auth | Saved/bookmarked events |
-| `/admin` | ADMIN | Admin overview |
-| `/admin/users` | ADMIN | User management |
-| `/admin/hosts` | ADMIN | Host management |
-| `/admin/events` | ADMIN | Event moderation |
-| `/admin/host-verifications` | ADMIN | Host approval workflow |
-| `/admin/event-shield` | ADMIN | Event shield / moderation |
-| `/admin/system-logs` | ADMIN | System logs |
+## Backend Integration
 
----
+The frontend uses `NEXT_PUBLIC_API_URL` as the REST API base URL. Socket.IO connects to the same backend origin after removing `/api/v1` from that URL.
 
-## Environment Variables
+Example:
 
-| Variable | Description |
-|---|---|
-| `NEXT_PUBLIC_API_URL` | Backend API base URL |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Stripe publishable key |
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5001/api/v1
+```
 
----
+Socket.IO will connect to:
+
+```text
+http://localhost:5001
+```
 
 ## Deployment
 
-Deployed on **Render** as a Node.js Web Service.
+### Render
 
-- Build: `npm install && npm run build`
-- Start: `npm start`
+This project includes `render.yaml`.
 
----
+```bash
+npm install && npm run build
+npm start
+```
+
+Set these environment variables in Render:
+
+```env
+NODE_ENV=production
+PORT=3000
+NEXT_PUBLIC_API_URL=https://your-backend-url/api/v1
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_or_test_key
+```
+
+### Vercel
+
+This project also includes `vercel.json` with Next.js framework detection.
+
+Required Vercel environment variables:
+
+```env
+NEXT_PUBLIC_API_URL=https://your-backend-url/api/v1
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_live_or_test_key
+```
+
+## Common Issues
+
+- If API requests fail, confirm `NEXT_PUBLIC_API_URL` includes `/api/v1`.
+- If real-time notifications do not connect, confirm the backend allows the frontend origin in `FRONTEND_URL`.
+- If Stripe checkout does not load, confirm `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` is set and the backend has the matching Stripe secret key.
+- If remote ImageKit images fail to render, confirm the URL host matches the allowed hosts in `next.config.ts`.
 
 ## Related
 
-- [EventMate Server](../eventmate_server/README.md) — Backend REST API
-
----
-
-## License
-
-MIT
-// Final review of social features documentation
+- [EventMate Server](../eventmate_server/README.md)

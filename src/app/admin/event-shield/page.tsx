@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminServices } from "@/services/admin.service";
-import { useAuthStore } from "@/store/auth.store";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   Shield, AlertTriangle, CheckCircle, XCircle, Eye, Trash2, RefreshCw, Users, Calendar, MapPin,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -34,22 +33,8 @@ function flagEvent(event: any): { reason: FlagReason; label: string; color: stri
 }
 
 export default function EventShieldPage() {
-  const { user } = useAuthStore();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState("flagged");
-
-  if (user?.role !== "ADMIN") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center p-12 bg-slate-900/60 rounded-[3rem] max-w-md border border-white/5">
-          <Shield className="w-10 h-10 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-black text-white mb-2">Access Denied</h2>
-          <Button onClick={() => router.push("/")} variant="glow" className="mt-6 rounded-2xl">Return Home</Button>
-        </div>
-      </div>
-    );
-  }
 
   const { data: events = [], isLoading, refetch } = useQuery({
     queryKey: ["admin-events-shield"],
@@ -81,32 +66,23 @@ export default function EventShieldPage() {
     : events;
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-black text-white tracking-tighter flex items-center gap-3">
-                <Shield className="w-8 h-8 text-red-500" />
-                Event Shield
-              </h1>
-              <p className="text-slate-400 font-medium mt-2">Monitor and moderate platform events</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" className="border-white/10 text-white hover:bg-white/5 rounded-xl font-black text-xs uppercase tracking-widest" onClick={() => refetch()}>
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </Button>
-              <Badge className="bg-red-500/20 text-red-400 border-none text-xs font-black px-4 py-2 uppercase tracking-widest">
-                <AlertTriangle className="w-3 h-3 mr-2" />
-                {flagged.length} Flagged
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto">
+      <AdminPageHeader
+        title="Event Shield"
+        description="Monitor and moderate platform events"
+        actions={
+          <>
+            <Button variant="outline" className="border-white/10 text-white hover:bg-white/5 rounded-xl font-black text-xs uppercase tracking-widest" onClick={() => refetch()}>
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+            <Badge className="bg-red-500/20 text-red-400 border-none text-xs font-black px-4 py-2 uppercase tracking-widest">
+              <AlertTriangle className="w-3 h-3 mr-2" />
+              {flagged.length} Flagged
+            </Badge>
+          </>
+        }
+      />
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-10">
           {[
@@ -226,7 +202,6 @@ export default function EventShieldPage() {
             })}
           </div>
         )}
-      </div>
     </div>
   );
 }

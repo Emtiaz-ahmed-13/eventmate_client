@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminServices } from "@/services/admin.service";
-import { useAuthStore } from "@/store/auth.store";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,25 +15,14 @@ import {
   Ban,
   Trash2,
   UserCheck,
-  ArrowLeft,
   Filter,
 } from "lucide-react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export default function UserManagement() {
-  const { user } = useAuthStore();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("all");
-
-  // Check if user is admin
-  if (user?.role !== "ADMIN") {
-    router.push("/");
-    return null;
-  }
 
   const { data: users, isLoading } = useQuery({
     queryKey: ["admin-users", searchTerm, selectedRole],
@@ -106,31 +95,17 @@ export default function UserManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      {/* Header */}
-      <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/admin">
-                <Button variant="outline" size="icon" className="border-white/10 text-white hover:bg-white/5">
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-4xl font-black text-white tracking-tighter">User Management</h1>
-                <p className="text-slate-400 font-medium mt-2">Manage users, roles, and permissions</p>
-              </div>
-            </div>
-            <Badge variant="emerald" className="bg-primary/20 text-primary border-none text-xs font-black tracking-[0.2em] px-4 py-2 uppercase">
-              <Users className="w-3 h-3 mr-2" />
-              {users?.length || 0} Users
-            </Badge>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto">
+      <AdminPageHeader
+        title="User Management"
+        description="Manage users, roles, and permissions"
+        actions={
+          <Badge variant="emerald" className="bg-primary/20 text-primary border-none text-xs font-black tracking-[0.2em] px-4 py-2 uppercase">
+            <Users className="w-3 h-3 mr-2" />
+            {users?.length || 0} Users
+          </Badge>
+        }
+      />
         {/* Filters */}
         <Card className="border border-white/5 shadow-premium bg-slate-900/40 backdrop-blur-xl mb-8">
           <CardContent className="p-6">
@@ -291,7 +266,6 @@ export default function UserManagement() {
             </CardContent>
           </Card>
         )}
-      </div>
     </div>
   );
 }

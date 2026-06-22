@@ -3,14 +3,13 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { AdminServices } from "@/services/admin.service";
-import { useAuthStore } from "@/store/auth.store";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Shield, Activity, User, Calendar, CreditCard, Bell, RefreshCw, Search,
+  Activity, User, Calendar, CreditCard, Bell, RefreshCw, Search,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 
 const TYPE_META: Record<string, { label: string; color: string; icon: any }> = {
   EVENT_JOIN:       { label: "Join",        color: "text-green-400 bg-green-500/10 border-green-500/20",   icon: Calendar },
@@ -27,22 +26,8 @@ const getMeta = (type: string) =>
   TYPE_META[type] || { label: type, color: "text-slate-400 bg-slate-500/10 border-slate-500/20", icon: Activity };
 
 export default function SystemLogsPage() {
-  const { user } = useAuthStore();
-  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-
-  if (user?.role !== "ADMIN") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center p-12 bg-slate-900/60 rounded-[3rem] max-w-md border border-white/5">
-          <Shield className="w-10 h-10 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-black text-white mb-2">Access Denied</h2>
-          <Button onClick={() => router.push("/")} variant="glow" className="mt-6 rounded-2xl">Return Home</Button>
-        </div>
-      </div>
-    );
-  }
 
   const { data: logs = [], isLoading, refetch } = useQuery({
     queryKey: ["admin-system-logs"],
@@ -59,35 +44,26 @@ export default function SystemLogsPage() {
   const uniqueTypes = [...new Set(logs.map((l: any) => l.type))] as string[];
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-black text-white tracking-tighter flex items-center gap-3">
-                <Activity className="w-8 h-8 text-blue-500" />
-                System Logs
-              </h1>
-              <p className="text-slate-400 font-medium mt-2">Real-time platform activity</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <Button
-                variant="outline"
-                className="border-white/10 text-white hover:bg-white/5 rounded-xl font-black text-xs uppercase tracking-widest"
-                onClick={() => refetch()}
-              >
-                <RefreshCw className="w-4 h-4 mr-2" />
-                Refresh
-              </Button>
-              <Badge className="bg-blue-500/20 text-blue-400 border-none text-xs font-black px-4 py-2 uppercase tracking-widest">
-                {logs.length} total
-              </Badge>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto">
+      <AdminPageHeader
+        title="System Logs"
+        description="Real-time platform activity"
+        actions={
+          <>
+            <Button
+              variant="outline"
+              className="border-white/10 text-white hover:bg-white/5 rounded-xl font-black text-xs uppercase tracking-widest"
+              onClick={() => refetch()}
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+            <Badge className="bg-blue-500/20 text-blue-400 border-none text-xs font-black px-4 py-2 uppercase tracking-widest">
+              {logs.length} total
+            </Badge>
+          </>
+        }
+      />
         {/* Search + Filter */}
         <div className="flex flex-col lg:flex-row gap-4 mb-8">
           <div className="relative flex-1">
@@ -175,7 +151,6 @@ export default function SystemLogsPage() {
             )}
           </CardContent>
         </Card>
-      </div>
     </div>
   );
 }

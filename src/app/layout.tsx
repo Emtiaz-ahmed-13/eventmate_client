@@ -3,7 +3,7 @@ import { Outfit } from "next/font/google";
 import "./globals.css";
 import QueryProvider from "@/components/providers/QueryProvider";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { Navbar } from "@/components/Navbar";
+import { ConditionalNavbar } from "@/components/ConditionalNavbar";
 import { Toaster } from "sonner";
 
 const outfit = Outfit({
@@ -53,7 +53,7 @@ export default function RootLayout({
       <body className={`${outfit.variable} font-sans antialiased`} suppressHydrationWarning>
         <ThemeProvider>
           <QueryProvider>
-            <Navbar />
+            <ConditionalNavbar />
             {children}
             <Toaster position="top-right" />
           </QueryProvider>

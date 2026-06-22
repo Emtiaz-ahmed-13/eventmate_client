@@ -10,6 +10,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { DEMO_ADMIN_CREDENTIALS } from "@/lib/demo-admin";
+import { Shield } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -23,6 +25,7 @@ export default function LoginPage() {
   const setAuth = useAuthStore((state) => state.setAuth);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   const {
     register,
@@ -31,6 +34,29 @@ export default function LoginPage() {
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
+
+  const handleDemoAdminLogin = async () => {
+    setDemoLoading(true);
+    setError(null);
+    try {
+      const response = await AuthServices.login(DEMO_ADMIN_CREDENTIALS);
+      if (response.success) {
+        setAuth(response.data.user, response.data.accessToken);
+        toast.success("Logged in as Demo Admin");
+        router.push("/admin");
+      } else {
+        setError(response.message || "Demo login failed");
+      }
+    } catch (err: any) {
+      const errorMessage =
+        err.response?.data?.message ||
+        "Demo admin unavailable. Run database seed first.";
+      setError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setDemoLoading(false);
+    }
+  };
 
   const onSubmit = async (data: LoginFormValues) => {
     setLoading(true);
@@ -114,6 +140,29 @@ export default function LoginPage() {
             </Button>
           </div>
         </form>
+
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-white/5" />
+          </div>
+          <div className="relative flex justify-center text-[10px] uppercase tracking-[0.2em]">
+            <span className="bg-slate-900/40 px-3 text-slate-500 font-black">or</span>
+          </div>
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          disabled={loading || demoLoading}
+          onClick={handleDemoAdminLogin}
+          className="w-full h-14 border-primary/30 text-primary hover:bg-primary/10 font-black text-xs uppercase tracking-[0.25em] rounded-2xl"
+        >
+          <Shield className="w-4 h-4 mr-2" />
+          {demoLoading ? "Signing in..." : "Login as Demo Admin"}
+        </Button>
+        <p className="text-center text-[10px] text-slate-600 font-medium">
+          Uses seeded admin account for quick review
+        </p>
 
         <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
           New to the Nexus?{" "}

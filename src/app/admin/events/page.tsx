@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminServices } from "@/services/admin.service";
 import { EventServices } from "@/services/event.service";
-import { useAuthStore } from "@/store/auth.store";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +15,6 @@ import {
   Users,
   DollarSign,
   Trash2,
-  ArrowLeft,
   Filter,
   Clock,
   Eye,
@@ -24,7 +23,6 @@ import {
   ChevronUp,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 function WaitlistPanel({ eventId }: { eventId: string }) {
@@ -83,17 +81,10 @@ function WaitlistPanel({ eventId }: { eventId: string }) {
 }
 
 export default function EventManagement() {
-  const { user } = useAuthStore();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [expandedWaitlist, setExpandedWaitlist] = useState<string | null>(null);
-
-  if (user?.role !== "ADMIN") {
-    router.push("/");
-    return null;
-  }
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["admin-events", searchTerm, selectedStatus],
@@ -126,39 +117,17 @@ export default function EventManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      {/* Header */}
-      <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link href="/admin">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="border-white/10 text-white hover:bg-white/5"
-                >
-                  <ArrowLeft className="w-4 h-4" />
-                </Button>
-              </Link>
-              <div>
-                <h1 className="text-4xl font-black text-white tracking-tighter">
-                  Event Management
-                </h1>
-                <p className="text-slate-400 font-medium mt-2">
-                  Monitor and manage all platform events
-                </p>
-              </div>
-            </div>
-            <Badge className="bg-primary/20 text-primary border-none text-xs font-black tracking-[0.2em] px-4 py-2 uppercase">
-              <Calendar className="w-3 h-3 mr-2" />
-              {events.length} Events
-            </Badge>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto">
+      <AdminPageHeader
+        title="Event Management"
+        description="Monitor and manage all platform events"
+        actions={
+          <Badge className="bg-primary/20 text-primary border-none text-xs font-black tracking-[0.2em] px-4 py-2 uppercase">
+            <Calendar className="w-3 h-3 mr-2" />
+            {events.length} Events
+          </Badge>
+        }
+      />
         {/* Filters */}
         <Card className="border border-white/5 bg-slate-900/40 backdrop-blur-xl mb-8">
           <CardContent className="p-6">
@@ -321,7 +290,6 @@ export default function EventManagement() {
             ))}
           </div>
         )}
-      </div>
     </div>
   );
 }

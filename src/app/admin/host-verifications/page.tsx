@@ -3,33 +3,18 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { AdminServices } from "@/services/admin.service";
-import { useAuthStore } from "@/store/auth.store";
+import { AdminPageHeader } from "@/components/admin/AdminPageHeader";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  Shield, UserCheck, Clock, CheckCircle, XCircle, Star, Calendar, Mail,
+  UserCheck, Clock, CheckCircle, XCircle, Star, Calendar, Mail,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 export default function HostVerificationsPage() {
-  const { user } = useAuthStore();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState("all");
-
-  if (user?.role !== "ADMIN") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center p-12 bg-slate-900/60 rounded-[3rem] max-w-md border border-white/5">
-          <Shield className="w-10 h-10 text-red-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-black text-white mb-2">Access Denied</h2>
-          <Button onClick={() => router.push("/")} variant="glow" className="mt-6 rounded-2xl">Return Home</Button>
-        </div>
-      </div>
-    );
-  }
 
   const { data: hosts = [], isLoading } = useQuery({
     queryKey: ["admin-pending-hosts"],
@@ -65,26 +50,17 @@ export default function HostVerificationsPage() {
   const verifiedCount = hosts.filter((h: any) => h.isVerified).length;
 
   return (
-    <div className="min-h-screen bg-background pb-32">
-      <div className="bg-slate-900/40 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-black text-white tracking-tighter flex items-center gap-3">
-                <UserCheck className="w-8 h-8 text-purple-500" />
-                Host Verifications
-              </h1>
-              <p className="text-slate-400 font-medium mt-2">Review and manage host accounts</p>
-            </div>
-            <Badge className="bg-yellow-500/20 text-yellow-500 border-none text-xs font-black tracking-[0.2em] px-4 py-2 uppercase">
-              <Clock className="w-3 h-3 mr-2" />
-              {pendingCount} Unverified
-            </Badge>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+    <div className="max-w-7xl mx-auto">
+      <AdminPageHeader
+        title="Host Verifications"
+        description="Review and manage host accounts"
+        actions={
+          <Badge className="bg-yellow-500/20 text-yellow-500 border-none text-xs font-black tracking-[0.2em] px-4 py-2 uppercase">
+            <Clock className="w-3 h-3 mr-2" />
+            {pendingCount} Unverified
+          </Badge>
+        }
+      />
         {/* Stats */}
         <div className="grid grid-cols-3 gap-6 mb-10">
           {[
@@ -210,7 +186,6 @@ export default function HostVerificationsPage() {
             })}
           </div>
         )}
-      </div>
     </div>
   );
 }

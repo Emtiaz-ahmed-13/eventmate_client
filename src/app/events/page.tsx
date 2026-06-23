@@ -1,10 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { EventServices } from "@/services/event.service";
 import { getEventCategory } from "@/lib/event-category";
-import { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
@@ -35,8 +35,25 @@ const CATEGORIES = [
 ];
 
 export default function EventsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center">
+          <div className="h-96 w-full max-w-7xl mx-auto px-4 animate-pulse bg-slate-800/30 rounded-[2rem] border border-white/5" />
+        </div>
+      }
+    >
+      <EventsPageContent />
+    </Suspense>
+  );
+}
+
+function EventsPageContent() {
+  const searchParams = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    () => searchParams.get("category") || searchParams.get("type"),
+  );
   const [location, setLocation] = useState("");
   const [dateRange, setDateRange] = useState("");
   const [paidOnly, setPaidOnly] = useState(false);
@@ -47,7 +64,16 @@ export default function EventsPage() {
   const [useNearMe, setUseNearMe] = useState(false);
   const [radius, setRadius] = useState("50"); // km
   const [page, setPage] = useState(1);
-  const LIMIT = 8;
+  const LIMIT = 12;
+
+  useEffect(() => {
+    const categoryFromUrl =
+      searchParams.get("category") || searchParams.get("type");
+    if (categoryFromUrl) {
+      setSelectedCategory(categoryFromUrl);
+      setPage(1);
+    }
+  }, [searchParams]);
 
   // Get user's location
   const getUserLocation = () => {

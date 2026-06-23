@@ -47,9 +47,9 @@ const CATEGORIES = [
 export default function Home() {
   const { isAuthenticated } = useAuthStore();
 
-  const { data: eventsResponse, isLoading } = useQuery({
-    queryKey: ["events"],
-    queryFn: () => EventServices.getAllEvents(),
+  const { data: eventsResponse, isLoading, isError } = useQuery({
+    queryKey: ["events", "home"],
+    queryFn: () => EventServices.getAllEvents({ limit: 50 }),
     retry: 2,
     staleTime: 5 * 60 * 1000,
   });
@@ -69,7 +69,22 @@ export default function Home() {
 
   const { data: trendingResponse, isLoading: isTrendingLoading } = useQuery({
     queryKey: ["trending-events"],
-    queryFn: () => EventServices.getTrendingEvents(6),
+    queryFn: async () => {
+      try {
+        const data = await EventServices.getTrendingEvents(6);
+        if (data?.events?.length) return data;
+      } catch {
+        // fall through to all events
+      }
+      const all = await EventServices.getAllEvents({ limit: 6 });
+      return {
+        events: (all.events ?? []).map((event: any) => ({
+          ...event,
+          trendingScore: event._count?.participants ?? 0,
+        })),
+        meta: { windowHours: 24 },
+      };
+    },
     retry: 2,
     staleTime: 60 * 1000,
   });
@@ -181,7 +196,7 @@ export default function Home() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {CATEGORIES.map((cat) => (
-              <Link key={cat.name} href={cat.name === "All Events" ? "/events" : `/events?type=${cat.name}`}>
+              <Link key={cat.name} href={cat.name === "All Events" ? "/events" : `/events?category=${encodeURIComponent(cat.name)}`}>
                 <div className={`group p-6 rounded-2xl bg-slate-900/40 border ${cat.color} ${cat.hover} transition-all duration-300 cursor-pointer flex items-center gap-4 hover:scale-[1.02] hover:shadow-lg`}>
                   <div className={`w-10 h-10 rounded-xl ${cat.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
                     <cat.icon className="w-5 h-5" />
@@ -326,6 +341,10 @@ export default function Home() {
           {isLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[1, 2, 3].map((i) => <div key={i} className="h-96 bg-slate-800/30 animate-pulse rounded-[2rem] border border-white/5" />)}
+            </div>
+          ) : isError ? (
+            <div className="col-span-3 text-center py-16 text-red-400">
+              Could not load events. Check your connection and refresh.
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

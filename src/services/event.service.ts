@@ -3,11 +3,16 @@ import api from "@/lib/api";
 export const EventServices = {
   getAllEvents: async (params?: any) => {
     const response = await api.get("/events", { params });
-    return response.data.data;
+    const data = response.data?.data;
+    if (Array.isArray(data)) return { events: data, meta: { total: data.length, page: 1, limit: data.length, totalPages: 1 } };
+    if (data?.events) return data;
+    return { events: [], meta: { total: 0, page: 1, limit: 50, totalPages: 1 } };
   },
   getTrendingEvents: async (limit = 10) => {
     const response = await api.get("/events/trending", { params: { limit } });
-    return response.data.data;
+    const data = response.data?.data;
+    if (data?.events?.length) return data;
+    return { events: [], meta: { windowHours: 24 } };
   },
   getEventById: async (id: string) => {
     const response = await api.get(`/events/${id}`);

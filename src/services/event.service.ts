@@ -5,6 +5,10 @@ export const EventServices = {
     const response = await api.get("/events", { params });
     return response.data.data;
   },
+  getTrendingEvents: async (limit = 10) => {
+    const response = await api.get("/events/trending", { params: { limit } });
+    return response.data.data;
+  },
   getEventById: async (id: string) => {
     const response = await api.get(`/events/${id}`);
     return response.data.data;

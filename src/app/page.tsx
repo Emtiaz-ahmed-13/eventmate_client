@@ -67,8 +67,20 @@ export default function Home() {
     staleTime: 5 * 60 * 1000,
   });
 
+  const { data: trendingResponse, isLoading: isTrendingLoading } = useQuery({
+    queryKey: ["trending-events"],
+    queryFn: () => EventServices.getTrendingEvents(6),
+    retry: 2,
+    staleTime: 15 * 60 * 1000,
+  });
+
   const reviews = reviewsData?.reviews ?? [];
+  const trendingWindowHours = trendingResponse?.meta?.windowHours ?? 24;
   const totalReviews = reviewsData?.total ?? 0;
+
+  const trendingEvents = React.useMemo(() => {
+    return trendingResponse?.events ?? [];
+  }, [trendingResponse]);
 
   const events = React.useMemo(() => {
     if (!eventsResponse) return [];
@@ -222,7 +234,10 @@ export default function Home() {
               <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-3 block flex items-center gap-2">
                 <TrendingUp className="w-3 h-3" /> Trending Now
               </span>
-              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">Featured Events</h2>
+              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">Trending Now</h2>
+              <p className="text-slate-500 mt-2 font-medium">
+                Most joined in the last {trendingWindowHours} hours
+              </p>
             </div>
             <Link href="/events">
               <Button variant="outline" className="border-white/10 text-slate-400 hover:text-white font-black gap-2 group rounded-xl">
@@ -231,13 +246,13 @@ export default function Home() {
             </Link>
           </div>
 
-          {isLoading ? (
+          {isTrendingLoading ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[1, 2, 3].map((i) => <div key={i} className="h-96 bg-slate-800/30 animate-pulse rounded-[2rem] border border-white/5" />)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {events.slice(0, 3).map((event: any) => (
+              {trendingEvents.slice(0, 6).map((event: any, index: number) => (
                 <Card key={event.id} className="group overflow-hidden border-white/5 bg-slate-900/40 hover:border-primary/20 transition-all duration-500">
                   <div className="aspect-[16/10] relative overflow-hidden bg-slate-800">
                     {event.image ? (
@@ -247,10 +262,15 @@ export default function Home() {
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
                     <Badge className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-primary border-white/10 text-[10px] font-black uppercase tracking-widest">
-                      {getEventCategory(event)}
+                      #{index + 1} · {getEventCategory(event)}
                     </Badge>
+                    {event.trendingScore > 0 && (
+                      <Badge className="absolute top-4 right-4 bg-amber-500/90 text-slate-950 border-none text-[10px] font-black uppercase tracking-widest">
+                        +{event.trendingScore} joins
+                      </Badge>
+                    )}
                     {event.joiningFee === 0 && (
-                      <Badge className="absolute top-4 right-4 bg-primary/80 text-slate-950 border-none text-[10px] font-black uppercase tracking-widest">Free</Badge>
+                      <Badge className="absolute bottom-4 right-4 bg-primary/80 text-slate-950 border-none text-[10px] font-black uppercase tracking-widest">Free</Badge>
                     )}
                   </div>
                   <CardContent className="p-7">
@@ -273,8 +293,8 @@ export default function Home() {
                   </CardContent>
                 </Card>
               ))}
-              {events.length === 0 && (
-                <div className="col-span-3 text-center py-16 text-slate-500">No events yet. Be the first to create one!</div>
+              {trendingEvents.length === 0 && (
+                <div className="col-span-3 text-center py-16 text-slate-500">No trending events yet. Join an event to kickstart the feed!</div>
               )}
             </div>
           )}

@@ -22,7 +22,12 @@ const REASONS = [
   "Other",
 ];
 
-export function ReportModal({ targetType, targetId, targetLabel, onClose }: Props) {
+export function ReportModal({
+  targetType,
+  targetId,
+  targetLabel,
+  onClose,
+}: Props) {
   const [reason, setReason] = useState(REASONS[0]);
   const [description, setDescription] = useState("");
   const [loading, setLoading] = useState(false);
@@ -56,7 +61,9 @@ export function ReportModal({ targetType, targetId, targetLabel, onClose }: Prop
             </div>
             <div>
               <h3 className="text-lg font-black text-white">Report</h3>
-              <p className="text-xs text-slate-500 truncate max-w-[200px]">{targetLabel}</p>
+              <p className="text-xs text-slate-500 truncate max-w-[200px]">
+                {targetLabel}
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="text-slate-400 hover:text-white">
@@ -75,7 +82,9 @@ export function ReportModal({ targetType, targetId, targetLabel, onClose }: Prop
               className="w-full px-4 py-3 bg-slate-800/50 border border-white/5 rounded-xl text-white text-sm"
             >
               {REASONS.map((r) => (
-                <option key={r} value={r} className="bg-slate-900">{r}</option>
+                <option key={r} value={r} className="bg-slate-900">
+                  {r}
+                </option>
               ))}
             </select>
           </div>

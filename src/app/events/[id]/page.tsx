@@ -23,7 +23,9 @@ import {
    X,
    Bookmark,
    BookmarkCheck,
-   Star
+   Star,
+   Flag,
+   Film
 } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -34,6 +36,8 @@ import { TicketDisplay } from "@/components/TicketDisplay";
 import { ChatBox } from "@/components/ChatBox";
 import { DiscussionSection } from "@/components/DiscussionSection";
 import { FollowButton } from "@/components/FollowButton";
+import { AddToCalendarButtons } from "@/components/AddToCalendarButtons";
+import { ReportModal } from "@/components/ReportModal";
 
 export default function EventDetails() {
    const { id } = useParams();
@@ -42,6 +46,10 @@ export default function EventDetails() {
    const [showPaymentModal, setShowPaymentModal] = useState(false);
    const [clientSecret, setClientSecret] = useState<string | null>(null);
    const [paymentIntentId, setPaymentIntentId] = useState<string | null>(null);
+   const [promoCode, setPromoCode] = useState("");
+   const [payAmount, setPayAmount] = useState<number | null>(null);
+   const [discountAmount, setDiscountAmount] = useState(0);
+   const [showReportModal, setShowReportModal] = useState(false);
    const [reviewForm, setReviewForm] = useState({ rating: 5, comment: "" });
    const [showReviewForm, setShowReviewForm] = useState(false);
 
@@ -75,13 +83,23 @@ export default function EventDetails() {
    });
 
    const createPaymentIntentMutation = useMutation({
-      mutationFn: async () => {
+      mutationFn: async (code?: string) => {
          if (!event?.id) throw new Error("Event ID not found");
-         return PaymentServices.createPaymentIntent(event.id, event.joiningFee);
+         return PaymentServices.createPaymentIntent(event.id, code);
       },
       onSuccess: (data) => {
+         if (data.freeJoin) {
+            queryClient.invalidateQueries({ queryKey: ["event", id] });
+            queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
+            setShowPaymentModal(false);
+            resetPaymentState();
+            toast.success(data.message || "Promo applied! You've joined the event.");
+            return;
+         }
          setClientSecret(data.clientSecret);
          setPaymentIntentId(data.paymentIntentId);
+         setPayAmount(data.amount);
+         setDiscountAmount(data.discountAmount || 0);
       },
       onError: (error: any) => {
          console.error("Failed to create payment intent:", error);
@@ -155,14 +173,25 @@ export default function EventDetails() {
       },
    });
 
+   const resetPaymentState = () => {
+      setClientSecret(null);
+      setPaymentIntentId(null);
+      setPayAmount(null);
+      setDiscountAmount(0);
+      setPromoCode("");
+   };
+
    const handleJoinClick = () => {
       const fee = Number(event?.joiningFee ?? 0);
       if (fee > 0) {
          setShowPaymentModal(true);
-         createPaymentIntentMutation.mutate();
       } else {
          joinMutation.mutate();
       }
+   };
+
+   const handleProceedToPayment = () => {
+      createPaymentIntentMutation.mutate(promoCode.trim() || undefined);
    };
 
    const handlePaymentSuccess = () => {
@@ -170,22 +199,19 @@ export default function EventDetails() {
       queryClient.invalidateQueries({ queryKey: ["event", id] });
       queryClient.invalidateQueries({ queryKey: ["dashboard-events", user?.id] });
       setShowPaymentModal(false);
-      setClientSecret(null);
-      setPaymentIntentId(null);
+      resetPaymentState();
       toast.success("Payment successful! You've joined the event.");
    };
 
    const handlePaymentError = (error: string) => {
       toast.error(error);
       setShowPaymentModal(false);
-      setClientSecret(null);
-      setPaymentIntentId(null);
+      resetPaymentState();
    };
 
    const handleClosePaymentModal = () => {
       setShowPaymentModal(false);
-      setClientSecret(null);
-      setPaymentIntentId(null);
+      resetPaymentState();
    };
 
    if (isLoading) {
@@ -274,6 +300,17 @@ export default function EventDetails() {
                         {isSaved ? <BookmarkCheck className="w-4 h-4 text-primary" /> : <Bookmark className="w-4 h-4" />}
                      </Button>
                   )}
+                  {isAuthenticated && !isHost && (
+                     <Button
+                        variant="outline"
+                        size="icon"
+                        className="bg-white/10 backdrop-blur-xl border-white/10 text-white rounded-2xl border hover:text-red-400"
+                        onClick={() => setShowReportModal(true)}
+                        title="Report event"
+                     >
+                        <Flag className="w-4 h-4" />
+                     </Button>
+                  )}
                </div>
             </div>
 
@@ -288,6 +325,12 @@ export default function EventDetails() {
                   </div>
                </div>
                <h1 className="text-5xl md:text-7xl font-black mb-6 tracking-tighter leading-none max-w-4xl">{event.name}</h1>
+               {event.movieName && (
+                  <div className="flex items-center gap-2 mb-4 text-primary">
+                     <Film className="w-5 h-5" />
+                     <span className="text-sm font-black uppercase tracking-widest">{event.movieName}</span>
+                  </div>
+               )}
                <div className="flex flex-wrap items-center gap-x-10 gap-y-4 text-sm font-black text-slate-300 uppercase tracking-widest">
                   <div className="flex items-center gap-3">
                      <Calendar className="w-5 h-5 text-primary" />
@@ -462,6 +505,16 @@ export default function EventDetails() {
                            </div>
                         </div>
 
+                        <div className="mb-10">
+                          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-4">Add to Calendar</span>
+                          <AddToCalendarButtons
+                            name={event.name}
+                            description={event.description}
+                            dateTime={event.dateTime}
+                            location={event.location}
+                          />
+                        </div>
+
                         {isAuthenticated ? (
                            isHost ? (
                               <div className="space-y-4">
@@ -559,6 +612,7 @@ export default function EventDetails() {
                            <div className="mt-10 pt-10 border-t border-white/5">
                               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-6">Your Entry Ticket</span>
                               <TicketDisplay 
+                                 eventId={event.id}
                                  eventName={event.name}
                                  userName={user?.name || "Guest"}
                                  date={event.dateTime}
@@ -624,7 +678,14 @@ export default function EventDetails() {
                      </div>
                      <div className="text-right flex-shrink-0">
                         <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Fee</p>
-                        <p className="text-2xl font-black text-primary">${event?.joiningFee}</p>
+                        {discountAmount > 0 && payAmount !== null ? (
+                           <>
+                              <p className="text-sm text-slate-500 line-through">${event?.joiningFee}</p>
+                              <p className="text-2xl font-black text-primary">${payAmount}</p>
+                           </>
+                        ) : (
+                           <p className="text-2xl font-black text-primary">${event?.joiningFee}</p>
+                        )}
                      </div>
                   </div>
 
@@ -637,21 +698,45 @@ export default function EventDetails() {
                         </div>
                      )}
 
+                     {!clientSecret && (
+                        <div className="mb-5">
+                           <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2 block">
+                              Promo Code (optional)
+                           </label>
+                           <div className="flex gap-2">
+                              <input
+                                 value={promoCode}
+                                 onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                                 placeholder="FRIEND20"
+                                 className="flex-1 px-4 py-3 bg-slate-800/50 border border-white/5 rounded-xl text-white text-sm font-black uppercase"
+                              />
+                           </div>
+                        </div>
+                     )}
+
                      {clientSecret ? (
                         <StripeProvider clientSecret={clientSecret}>
                            <PaymentForm
                               onSuccess={handlePaymentSuccess}
                               onError={handlePaymentError}
-                              amount={event?.joiningFee || 0}
+                              amount={payAmount ?? event?.joiningFee ?? 0}
                               eventName={event?.name || ""}
                               isLoading={joinMutation.isPending}
                            />
                         </StripeProvider>
-                     ) : (
+                     ) : createPaymentIntentMutation.isPending ? (
                         <div className="flex flex-col items-center justify-center py-10 gap-4">
                            <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
                            <span className="text-slate-500 text-xs font-black uppercase tracking-widest">Initializing payment...</span>
                         </div>
+                     ) : (
+                        <Button
+                           onClick={handleProceedToPayment}
+                           variant="glow"
+                           className="w-full h-12 rounded-2xl font-black uppercase tracking-[0.2em] text-xs"
+                        >
+                           Continue to Payment
+                        </Button>
                      )}
                   </div>
 
@@ -662,6 +747,14 @@ export default function EventDetails() {
                   </div>
                </div>
             </div>
+         )}
+         {showReportModal && (
+            <ReportModal
+               targetType="EVENT"
+               targetId={event.id}
+               targetLabel={event.name}
+               onClose={() => setShowReportModal(false)}
+            />
          )}
       </div>
    );

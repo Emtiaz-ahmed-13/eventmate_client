@@ -110,9 +110,16 @@ describe("API services", () => {
   });
 
   it("calls payment, review, chat, discussion, follow, analytics, and admin endpoints", async () => {
-    await PaymentServices.createPaymentIntent("event-1", 100);
+    await PaymentServices.createPaymentIntent("event-1");
     expect(mockApi.post).toHaveBeenCalledWith("/payments/create-intent", {
       eventId: "event-1",
+      promoCode: undefined,
+    });
+
+    await PaymentServices.createPaymentIntent("event-1", "SAVE20");
+    expect(mockApi.post).toHaveBeenCalledWith("/payments/create-intent", {
+      eventId: "event-1",
+      promoCode: "SAVE20",
     });
 
     await PaymentServices.confirmPayment("pi_123");

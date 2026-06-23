@@ -28,7 +28,8 @@ const eventSchema = z.object({
   description: z.string().min(20, "Please provide a more detailed description"),
   dateTime: z.string().min(1, "Date and time are required"),
   location: z.string().min(5, "Location is required"),
-  type: z.string().min(1, "Event type is required"),
+  category: z.string().min(1, "Category is required"),
+  movieName: z.string().optional(),
   capacity: z.number().min(1, "Capacity must be at least 1"),
   joiningFee: z.number().min(0, "Fee cannot be negative"),
 });
@@ -45,6 +46,7 @@ export default function CreateEvent() {
   const {
     register,
     handleSubmit,
+    watch,
     formState: { errors },
   } = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
@@ -54,14 +56,20 @@ export default function CreateEvent() {
     }
   });
 
+  const selectedCategory = watch("category");
+
   const onSubmit = async (data: EventFormValues) => {
     setLoading(true);
     setError(null);
     try {
       const formData = new FormData();
       Object.entries(data).forEach(([key, value]) => {
-        formData.append(key, value.toString());
+        if (key === "movieName" && selectedCategory !== "Movie") return;
+        if (value !== undefined && value !== "") {
+          formData.append(key, value.toString());
+        }
       });
+      formData.append("type", "In-person");
 
       if (banner) {
         formData.append("image", banner);
@@ -201,22 +209,38 @@ export default function CreateEvent() {
                   </label>
                   <div className="relative">
                     <select
-                      {...register("type")}
+                      {...register("category")}
                       className="w-full px-6 py-5 bg-slate-900/50 border border-white/5 rounded-2xl text-white focus:ring-1 focus:ring-primary/40 outline-none transition-all font-black appearance-none cursor-pointer"
                     >
                       <option className="bg-slate-900" value="">Select a category</option>
-                      <option className="bg-slate-900" value="Concert">Music & Concert</option>
-                      <option className="bg-slate-900" value="Tech">Tech & Startup</option>
-                      <option className="bg-slate-900" value="Culture">Art & Culture</option>
-                      <option className="bg-slate-900" value="Sports">Cricket & Sports</option>
-                      <option className="bg-slate-900" value="Food">Food Crawl</option>
-                      <option className="bg-slate-900" value="Festival">Traditional Festival</option>
-                      <option className="bg-slate-900" value="Workshop">Skills & Workshop</option>
+                      <option className="bg-slate-900" value="Music & Concert">Music & Concert</option>
+                      <option className="bg-slate-900" value="Movie">Movie</option>
+                      <option className="bg-slate-900" value="Technology">Tech & Startup</option>
+                      <option className="bg-slate-900" value="Art & Culture">Art & Culture</option>
+                      <option className="bg-slate-900" value="Cricket & Sports">Cricket & Sports</option>
+                      <option className="bg-slate-900" value="Food Crawl">Food Crawl</option>
+                      <option className="bg-slate-900" value="Traditional Festival">Traditional Festival</option>
+                      <option className="bg-slate-900" value="Skills & Workshop">Skills & Workshop</option>
                     </select>
                     <ChevronDown className="w-4 h-4 absolute right-6 top-1/2 -translate-y-1/2 text-slate-600 pointer-events-none" />
                   </div>
-                  {errors.type && <p className="mt-3 text-[10px] text-red-500 font-black uppercase tracking-widest">{errors.type.message}</p>}
+                  {errors.category && <p className="mt-3 text-[10px] text-red-500 font-black uppercase tracking-widest">{errors.category.message}</p>}
                 </div>
+
+                {selectedCategory === "Movie" && (
+                  <div>
+                    <label className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-4">
+                      <Tag className="w-4 h-4 text-primary" />
+                      Movie Name
+                    </label>
+                    <input
+                      {...register("movieName")}
+                      className="w-full px-6 py-5 bg-slate-900/50 border border-white/5 rounded-2xl text-white focus:ring-1 focus:ring-primary/40 outline-none transition-all placeholder:text-slate-600 font-medium"
+                      placeholder="e.g. Bonolota Express"
+                    />
+                    <p className="mt-2 text-[10px] text-slate-600 font-medium">Shown on movie screening events</p>
+                  </div>
+                )}
 
                 <div
                   onClick={() => fileInputRef.current?.click()}

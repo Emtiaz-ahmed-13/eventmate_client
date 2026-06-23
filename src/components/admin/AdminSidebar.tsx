@@ -10,6 +10,7 @@ import {
   Shield,
   UserCheck,
   Users,
+  Flag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -20,6 +21,7 @@ const NAV_ITEMS = [
   { href: "/admin/events", label: "Events", icon: Calendar },
   { href: "/admin/host-verifications", label: "Host Verifications", icon: UserCheck },
   { href: "/admin/event-shield", label: "Event Shield", icon: Shield },
+  { href: "/admin/reports", label: "Reports", icon: Flag },
   { href: "/admin/system-logs", label: "System Logs", icon: ScrollText },
 ] as const;
 

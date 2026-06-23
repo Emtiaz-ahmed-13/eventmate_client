@@ -9,6 +9,7 @@ import { useAuthStore } from "@/store/auth.store";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { getEventCategory } from "@/lib/event-category";
 import Link from "next/link";
 import {
   Calendar,
@@ -27,12 +28,14 @@ import {
   Star,
   MapPin,
   Briefcase,
+  Clapperboard,
   Heart,
 } from "lucide-react";
 
 const CATEGORIES = [
   { name: "Music", icon: Music, color: "bg-blue-500/10 text-blue-400 border-blue-500/20", hover: "hover:bg-blue-500/20" },
   { name: "Technology", icon: Laptop, color: "bg-violet-500/10 text-violet-400 border-violet-500/20", hover: "hover:bg-violet-500/20" },
+  { name: "Movie", icon: Clapperboard, color: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20", hover: "hover:bg-fuchsia-500/20" },
   { name: "Art", icon: Palette, color: "bg-amber-500/10 text-amber-400 border-amber-500/20", hover: "hover:bg-amber-500/20" },
   { name: "Sports", icon: Trophy, color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", hover: "hover:bg-emerald-500/20" },
   { name: "Food", icon: Utensils, color: "bg-orange-500/10 text-orange-400 border-orange-500/20", hover: "hover:bg-orange-500/20" },
@@ -240,11 +243,11 @@ export default function Home() {
                     {event.image ? (
                       <img src={event.image} alt={event.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-slate-700 font-black text-xs tracking-widest uppercase">{event.type}</div>
+                      <div className="w-full h-full flex items-center justify-center text-slate-700 font-black text-xs tracking-widest uppercase">{getEventCategory(event)}</div>
                     )}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
                     <Badge className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-primary border-white/10 text-[10px] font-black uppercase tracking-widest">
-                      {event.type}
+                      {getEventCategory(event)}
                     </Badge>
                     {event.joiningFee === 0 && (
                       <Badge className="absolute top-4 right-4 bg-primary/80 text-slate-950 border-none text-[10px] font-black uppercase tracking-widest">Free</Badge>

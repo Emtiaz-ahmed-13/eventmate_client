@@ -3,6 +3,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { EventServices } from "@/services/event.service";
+import { getEventCategory } from "@/lib/event-category";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,12 +20,14 @@ import {
   Palette,
   Trophy,
   Utensils,
-  Briefcase
+  Briefcase,
+  Clapperboard
 } from "lucide-react";
 
 const CATEGORIES = [
   { name: "Music", icon: <Music className="w-4 h-4" /> },
   { name: "Technology", icon: <Laptop className="w-4 h-4" /> },
+  { name: "Movie", icon: <Clapperboard className="w-4 h-4" /> },
   { name: "Art", icon: <Palette className="w-4 h-4" /> },
   { name: "Sports", icon: <Trophy className="w-4 h-4" /> },
   { name: "Food", icon: <Utensils className="w-4 h-4" /> },
@@ -74,7 +77,7 @@ export default function EventsPage() {
       try {
         const params: any = { 
           searchTerm: searchTerm || undefined, 
-          type: selectedCategory || undefined,
+          category: selectedCategory || undefined,
           location: location || undefined,
           dateRange: dateRange || undefined,
           paidOnly: paidOnly || undefined,
@@ -334,12 +337,12 @@ export default function EventsPage() {
                                  {event.image ? (
                                     <img src={event.image} alt={event.name} className="w-full h-full object-cover opacity-100" />
                                  ) : (
-                                    event.type
+                                    getEventCategory(event)
                                  )}
                               </div>
                               <div className="absolute top-6 left-6 flex gap-2 z-10">
                                  <Badge variant="emerald" className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest bg-slate-900/80 backdrop-blur-md border-white/10">
-                                    {event.type}
+                                    {getEventCategory(event)}
                                  </Badge>
                                  {event.joiningFee === 0 && (
                                     <Badge variant="emerald" className="px-3 py-1.5 text-[10px] font-black uppercase tracking-widest">

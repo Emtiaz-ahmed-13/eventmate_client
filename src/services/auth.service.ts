@@ -25,6 +25,14 @@ export const AuthService = {
     });
     return response.data;
   },
+  sendLoginOtp: async (email: string) => {
+    const response = await api.post("/auth/send-otp", { email }, { timeout: 30000 });
+    return response.data;
+  },
+  verifyLoginOtp: async (email: string, otp: string) => {
+    const response = await api.post("/auth/verify-otp", { email, otp }, { timeout: 30000 });
+    return response.data;
+  },
   forgotPassword: async (email: string) => {
     const response = await api.post("/auth/forgot-password", { email }, {
       timeout: 10000,

@@ -33,12 +33,28 @@ import {
   Bookmark,
   Copy,
   QrCode,
+  Mail,
+  Link2,
+  Tag,
+  History,
 } from "lucide-react";
+import { InviteFriendModal } from "@/components/InviteFriendModal";
+import { InviteHistoryModal } from "@/components/InviteHistoryModal";
+import { PromoCodeModal } from "@/components/PromoCodeModal";
 
 export default function Dashboard() {
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
   const [expandedEvent, setExpandedEvent] = useState<string | null>(null);
+  const [inviteEvent, setInviteEvent] = useState<{ id: string; name: string } | null>(null);
+  const [inviteHistoryEvent, setInviteHistoryEvent] = useState<{ id: string; name: string } | null>(null);
+  const [promoEvent, setPromoEvent] = useState<{ id: string; name: string } | null>(null);
+
+  const copyEventLink = (eventId: string) => {
+    const url = `${window.location.origin}/events/${eventId}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Event link copied!");
+  };
 
   const deleteMutation = useMutation({
     mutationFn: (eventId: string) => EventServices.deleteEvent(eventId),
@@ -442,6 +458,42 @@ export default function Dashboard() {
                       <Button
                         variant="outline"
                         size="icon"
+                        className="h-10 w-10 rounded-xl border-white/10 hover:bg-cyan-500/10 hover:border-cyan-500/20 hover:text-cyan-400"
+                        title="Copy event link"
+                        onClick={() => copyEventLink(event.id)}
+                      >
+                        <Link2 className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl border-white/10 hover:bg-pink-500/10 hover:border-pink-500/20 hover:text-pink-400"
+                        title="Invite friend by email"
+                        onClick={() => setInviteEvent({ id: event.id, name: event.name })}
+                      >
+                        <Mail className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl border-white/10 hover:bg-blue-500/10 hover:border-blue-500/20 hover:text-blue-400"
+                        title="Invite history"
+                        onClick={() => setInviteHistoryEvent({ id: event.id, name: event.name })}
+                      >
+                        <History className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="h-10 w-10 rounded-xl border-white/10 hover:bg-amber-500/10 hover:border-amber-500/20 hover:text-amber-400"
+                        title="Promo codes"
+                        onClick={() => setPromoEvent({ id: event.id, name: event.name })}
+                      >
+                        <Tag className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
                         className="h-10 w-10 rounded-xl border-white/10 hover:bg-indigo-500/10 hover:border-indigo-500/20 hover:text-indigo-400"
                         title="Duplicate event"
                         onClick={() => { if (confirm("Duplicate this event?")) duplicateMutation.mutate(event.id); }}
@@ -728,6 +780,27 @@ export default function Dashboard() {
           </>
         )}
       </div>
+      {inviteEvent && (
+        <InviteFriendModal
+          eventId={inviteEvent.id}
+          eventName={inviteEvent.name}
+          onClose={() => setInviteEvent(null)}
+        />
+      )}
+      {inviteHistoryEvent && (
+        <InviteHistoryModal
+          eventId={inviteHistoryEvent.id}
+          eventName={inviteHistoryEvent.name}
+          onClose={() => setInviteHistoryEvent(null)}
+        />
+      )}
+      {promoEvent && (
+        <PromoCodeModal
+          eventId={promoEvent.id}
+          eventName={promoEvent.name}
+          onClose={() => setPromoEvent(null)}
+        />
+      )}
     </div>
   );
 }

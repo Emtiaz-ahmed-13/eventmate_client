@@ -79,4 +79,18 @@ export const EventServices = {
     const response = await api.patch(`/events/${eventId}/participants/verify/${ticketId}`);
     return response.data.data;
   },
+  downloadTicket: async (eventId: string) => {
+    const response = await api.get(`/events/${eventId}/ticket/download`, {
+      responseType: "blob",
+    });
+    return response.data;
+  },
+  inviteFriend: async (eventId: string, data: { email: string; message?: string }) => {
+    const response = await api.post(`/events/${eventId}/invite`, data);
+    return response.data;
+  },
+  getEventInvites: async (eventId: string) => {
+    const response = await api.get(`/events/${eventId}/invites`);
+    return response.data.data;
+  },
 };

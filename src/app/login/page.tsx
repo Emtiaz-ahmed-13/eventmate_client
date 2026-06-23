@@ -26,6 +26,10 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
+  const [mode, setMode] = useState<"password" | "otp">("password");
+  const [otpEmail, setOtpEmail] = useState("");
+  const [otpCode, setOtpCode] = useState("");
+  const [otpSent, setOtpSent] = useState(false);
 
   const {
     register,
@@ -77,9 +81,47 @@ export default function LoginPage() {
     }
   };
 
+  const handleSendOtp = async () => {
+    if (!otpEmail.includes("@")) {
+      setError("Enter a valid email address");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await AuthServices.sendLoginOtp(otpEmail);
+      setOtpSent(true);
+      toast.success(response.message || "Login code sent!");
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to send login code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (otpCode.length !== 6) {
+      setError("Enter the 6-digit code");
+      return;
+    }
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await AuthServices.verifyLoginOtp(otpEmail, otpCode);
+      if (response.success) {
+        setAuth(response.data.user, response.data.accessToken);
+        toast.success("Logged in with OTP");
+        router.push("/");
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Invalid login code");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background px-4 relative overflow-hidden">
-      {/* Decorative Blurs */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" />
       <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px] translate-y-1/2 -translate-x-1/2" />
 
@@ -90,56 +132,105 @@ export default function LoginPage() {
           <p className="mt-2 text-xs font-black text-slate-500 uppercase tracking-[0.2em] italic">Authenticate to continue protocol</p>
         </div>
 
+        <div className="grid grid-cols-2 gap-2 p-1 bg-slate-900/50 rounded-2xl border border-white/5">
+          <button
+            type="button"
+            onClick={() => { setMode("password"); setError(null); }}
+            className={`h-10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${mode === "password" ? "bg-primary text-slate-950" : "text-slate-400 hover:text-white"}`}
+          >
+            Password
+          </button>
+          <button
+            type="button"
+            onClick={() => { setMode("otp"); setError(null); }}
+            className={`h-10 rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors ${mode === "otp" ? "bg-primary text-slate-950" : "text-slate-400 hover:text-white"}`}
+          >
+            Email OTP
+          </button>
+        </div>
+
         {error && (
           <div className="p-4 bg-red-900/20 border border-red-500/20 text-red-400 text-[10px] rounded-2xl font-black uppercase tracking-widest text-center">
             {error}
           </div>
         )}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-          <div className="space-y-6">
+        {mode === "password" ? (
+          <form className="mt-2 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <div className="space-y-6">
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Email Protocol</label>
+                <input
+                  {...register("email")}
+                  type="email"
+                  className="w-full px-6 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-slate-700 font-medium"
+                  placeholder="architect@nexus.com"
+                />
+                {errors.email && <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">{errors.email.message}</p>}
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Secure Key</label>
+                <input
+                  {...register("password")}
+                  type="password"
+                  className="w-full px-6 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-slate-700 font-medium"
+                  placeholder="••••••••"
+                />
+                {errors.password && <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">{errors.password.message}</p>}
+              </div>
+              <div className="text-right">
+                <Link href="/forgot-password" className="text-[10px] font-black text-slate-400 hover:text-primary transition-colors uppercase tracking-[0.2em]">
+                  Forgot Key?
+                </Link>
+              </div>
+            </div>
+            <Button type="submit" disabled={loading} variant="glow" className="w-full h-14 font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl transition-all active:scale-[0.98]">
+              {loading ? "Syncing..." : "Initialize Session"}
+            </Button>
+          </form>
+        ) : (
+          <div className="mt-2 space-y-6">
             <div>
               <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Email Protocol</label>
               <input
-                {...register("email")}
                 type="email"
-                className="w-full px-6 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-slate-700 font-medium"
-                placeholder="architect@nexus.com"
+                value={otpEmail}
+                onChange={(e) => setOtpEmail(e.target.value)}
+                disabled={otpSent}
+                className="w-full px-6 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-slate-700 font-medium disabled:opacity-60"
+                placeholder="you@email.com"
               />
-              {errors.email && <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">{errors.email.message}</p>}
             </div>
-            <div>
-              <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">Secure Key</label>
-              <input
-                {...register("password")}
-                type="password"
-                className="w-full px-6 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-slate-700 font-medium"
-                placeholder="••••••••"
-              />
-              {errors.password && <p className="mt-2 text-[10px] text-red-500 font-black uppercase tracking-widest ml-1">{errors.password.message}</p>}
-            </div>
-            
-            <div className="text-right">
-              <Link 
-                href="/forgot-password" 
-                className="text-[10px] font-black text-slate-400 hover:text-primary transition-colors uppercase tracking-[0.2em]"
-              >
-                Forgot Key?
-              </Link>
-            </div>
+            {otpSent && (
+              <div>
+                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3 ml-1">6-Digit Code</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, ""))}
+                  className="w-full px-6 py-4 bg-slate-900/50 border border-white/5 rounded-2xl text-white text-center tracking-[0.5em] text-lg focus:outline-none focus:ring-1 focus:ring-primary/40 transition-all font-black"
+                  placeholder="000000"
+                />
+              </div>
+            )}
+            {!otpSent ? (
+              <Button type="button" onClick={handleSendOtp} disabled={loading} variant="glow" className="w-full h-14 font-black text-xs uppercase tracking-[0.3em] rounded-2xl">
+                {loading ? "Sending..." : "Send Login Code"}
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <Button type="button" onClick={handleVerifyOtp} disabled={loading} variant="glow" className="w-full h-14 font-black text-xs uppercase tracking-[0.3em] rounded-2xl">
+                  {loading ? "Verifying..." : "Verify & Login"}
+                </Button>
+                <button type="button" onClick={() => { setOtpSent(false); setOtpCode(""); }} className="w-full text-[10px] font-black text-slate-500 uppercase tracking-widest hover:text-primary">
+                  Use different email
+                </button>
+              </div>
+            )}
           </div>
-
-          <div>
-            <Button
-              type="submit"
-              disabled={loading}
-              variant="glow"
-              className="w-full h-14 font-black text-xs uppercase tracking-[0.3em] rounded-2xl shadow-xl transition-all active:scale-[0.98]"
-            >
-              {loading ? "Syncing..." : "Initialize Session"}
-            </Button>
-          </div>
-        </form>
+        )}
 
         <div className="relative">
           <div className="absolute inset-0 flex items-center">
@@ -160,9 +251,6 @@ export default function LoginPage() {
           <Shield className="w-4 h-4 mr-2" />
           {demoLoading ? "Signing in..." : "Login as Demo Admin"}
         </Button>
-        <p className="text-center text-[10px] text-slate-600 font-medium">
-          Uses seeded admin account for quick review
-        </p>
 
         <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-500 italic">
           New to the Nexus?{" "}

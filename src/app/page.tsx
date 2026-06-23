@@ -32,6 +32,33 @@ import {
   Heart,
 } from "lucide-react";
 
+const TRENDING_LIMIT = 6;
+
+const TRENDING_SUBTITLES: Record<string, string> = {
+  "24h-window": "Most joined in the last 24 hours",
+  "recent-join": "Events with the latest join activity",
+  "most-joined": "Most joined events overall",
+  "newest-event": "Latest events on EventMate",
+  "most-joined-fallback": "Most joined events overall",
+  "newest-fallback": "Latest events on EventMate",
+};
+
+function getTrendingBadge(event: any, algorithm?: string) {
+  if (algorithm === "24h-window" && event.trendingScore > 0) {
+    return `+${event.trendingScore} joins (24h)`;
+  }
+  if (algorithm === "most-joined" || algorithm === "most-joined-fallback") {
+    return `${event.trendingScore} joined`;
+  }
+  if (algorithm === "recent-join" && event.lastJoinedAt) {
+    return "Latest join";
+  }
+  if (algorithm === "newest-event" || algorithm === "newest-fallback") {
+    return "New event";
+  }
+  return null;
+}
+
 const CATEGORIES = [
   { name: "Music", icon: Music, color: "bg-blue-500/10 text-blue-400 border-blue-500/20", hover: "hover:bg-blue-500/20" },
   { name: "Technology", icon: Laptop, color: "bg-violet-500/10 text-violet-400 border-violet-500/20", hover: "hover:bg-violet-500/20" },
@@ -70,42 +97,50 @@ export default function Home() {
   const { data: trendingResponse, isLoading: isTrendingLoading } = useQuery({
     queryKey: ["trending-events"],
     queryFn: async () => {
-      try {
-        const data = await EventServices.getTrendingEvents(6);
-        if (data?.events?.length) return data;
-      } catch {
-        // trending API unavailable — use popularity fallback below
-      }
+      const data = await EventServices.getTrendingEvents(TRENDING_LIMIT);
+      if (data?.events?.length) return data;
 
+      // API unavailable — mirror server priority with list data only
       const all = await EventServices.getAllEvents({ limit: 50, sortBy: "popularity" });
-      const events = (all.events ?? [])
+      const pool = all.events ?? [];
+
+      const mostJoined = pool
+        .filter((event: any) => (event._count?.participants ?? 0) > 0)
+        .slice(0, TRENDING_LIMIT)
         .map((event: any) => ({
           ...event,
           trendingScore: event._count?.participants ?? 0,
-        }))
-        .filter((event: any) => event.trendingScore > 0)
-        .slice(0, 6);
+        }));
 
-      if (events.length > 0) {
-        return { events, meta: { windowHours: 24, algorithm: "popularity-fallback" } };
+      if (mostJoined.length > 0) {
+        return {
+          events: mostJoined,
+          meta: { windowHours: 24, algorithm: "most-joined-fallback" },
+        };
       }
 
-      const latest = (all.events ?? []).slice(0, 6).map((event: any) => ({
-        ...event,
-        trendingScore: event._count?.participants ?? 0,
-      }));
-      return { events: latest, meta: { windowHours: 24, algorithm: "latest-fallback" } };
+      return {
+        events: pool.slice(0, Math.min(3, TRENDING_LIMIT)).map((event: any) => ({
+          ...event,
+          trendingScore: 0,
+        })),
+        meta: { windowHours: 24, algorithm: "newest-fallback" },
+      };
     },
     retry: 2,
     staleTime: 60 * 1000,
   });
 
   const reviews = reviewsData?.reviews ?? [];
+  const trendingAlgorithm = trendingResponse?.meta?.algorithm ?? "24h-window";
   const trendingWindowHours = trendingResponse?.meta?.windowHours ?? 24;
+  const trendingSubtitle =
+    TRENDING_SUBTITLES[trendingAlgorithm] ??
+    `Most joined in the last ${trendingWindowHours} hours`;
   const totalReviews = reviewsData?.total ?? 0;
 
   const trendingEvents = React.useMemo(() => {
-    return trendingResponse?.events ?? [];
+    return (trendingResponse?.events ?? []).slice(0, TRENDING_LIMIT);
   }, [trendingResponse]);
 
   const events = React.useMemo(() => {
@@ -262,7 +297,7 @@ export default function Home() {
               </span>
               <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">Trending Now</h2>
               <p className="text-slate-500 mt-2 font-medium">
-                Most joined in the last {trendingWindowHours} hours
+                {trendingSubtitle}
               </p>
             </div>
             <Link href="/events">
@@ -278,7 +313,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {trendingEvents.slice(0, 6).map((event: any, index: number) => (
+              {trendingEvents.map((event: any, index: number) => (
                 <Card key={event.id} className="group overflow-hidden border-white/5 bg-slate-900/40 hover:border-primary/20 transition-all duration-500">
                   <div className="aspect-[16/10] relative overflow-hidden bg-slate-800">
                     {event.image ? (
@@ -290,12 +325,12 @@ export default function Home() {
                     <Badge className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-primary border-white/10 text-[10px] font-black uppercase tracking-widest">
                       #{index + 1} · {getEventCategory(event)}
                     </Badge>
-                    {event.trendingScore > 0 && (
+                    {getTrendingBadge(event, trendingAlgorithm) && (
                       <Badge className="absolute top-4 right-4 bg-amber-500/90 text-slate-950 border-none text-[10px] font-black uppercase tracking-widest">
-                        +{event.trendingScore} joins
+                        {getTrendingBadge(event, trendingAlgorithm)}
                       </Badge>
                     )}
-                    {index === 0 && event.lastJoinedAt && (
+                    {index === 0 && event.lastJoinedAt && trendingAlgorithm === "recent-join" && (
                       <Badge className="absolute bottom-4 left-4 bg-primary/90 text-slate-950 border-none text-[10px] font-black uppercase tracking-widest">
                         Latest join
                       </Badge>

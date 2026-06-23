@@ -11,8 +11,8 @@ export const EventServices = {
   getTrendingEvents: async (limit = 10) => {
     const response = await api.get("/events/trending", { params: { limit } });
     const data = response.data?.data;
-    if (data?.events?.length) return data;
-    return { events: [], meta: { windowHours: 24 } };
+    if (Array.isArray(data?.events)) return data;
+    return null;
   },
   getEventById: async (id: string) => {
     const response = await api.get(`/events/${id}`);

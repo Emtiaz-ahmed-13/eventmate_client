@@ -74,16 +74,27 @@ export default function Home() {
         const data = await EventServices.getTrendingEvents(6);
         if (data?.events?.length) return data;
       } catch {
-        // fall through to all events
+        // trending API unavailable — use popularity fallback below
       }
-      const all = await EventServices.getAllEvents({ limit: 6 });
-      return {
-        events: (all.events ?? []).map((event: any) => ({
+
+      const all = await EventServices.getAllEvents({ limit: 50, sortBy: "popularity" });
+      const events = (all.events ?? [])
+        .map((event: any) => ({
           ...event,
           trendingScore: event._count?.participants ?? 0,
-        })),
-        meta: { windowHours: 24 },
-      };
+        }))
+        .filter((event: any) => event.trendingScore > 0)
+        .slice(0, 6);
+
+      if (events.length > 0) {
+        return { events, meta: { windowHours: 24, algorithm: "popularity-fallback" } };
+      }
+
+      const latest = (all.events ?? []).slice(0, 6).map((event: any) => ({
+        ...event,
+        trendingScore: event._count?.participants ?? 0,
+      }));
+      return { events: latest, meta: { windowHours: 24, algorithm: "latest-fallback" } };
     },
     retry: 2,
     staleTime: 60 * 1000,

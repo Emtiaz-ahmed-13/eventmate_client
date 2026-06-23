@@ -71,7 +71,7 @@ export default function Home() {
     queryKey: ["trending-events"],
     queryFn: () => EventServices.getTrendingEvents(6),
     retry: 2,
-    staleTime: 15 * 60 * 1000,
+    staleTime: 60 * 1000,
   });
 
   const reviews = reviewsData?.reviews ?? [];
@@ -269,6 +269,11 @@ export default function Home() {
                         +{event.trendingScore} joins
                       </Badge>
                     )}
+                    {index === 0 && event.lastJoinedAt && (
+                      <Badge className="absolute bottom-4 left-4 bg-primary/90 text-slate-950 border-none text-[10px] font-black uppercase tracking-widest">
+                        Latest join
+                      </Badge>
+                    )}
                     {event.joiningFee === 0 && (
                       <Badge className="absolute bottom-4 right-4 bg-primary/80 text-slate-950 border-none text-[10px] font-black uppercase tracking-widest">Free</Badge>
                     )}
@@ -295,6 +300,73 @@ export default function Home() {
               ))}
               {trendingEvents.length === 0 && (
                 <div className="col-span-3 text-center py-16 text-slate-500">No trending events yet. Join an event to kickstart the feed!</div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── FEATURED EVENTS ── */}
+      <section className="py-28 bg-slate-900/20 relative">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/5 to-transparent" />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-14 gap-6">
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-3 block">Explore</span>
+              <h2 className="text-4xl md:text-5xl font-black text-white tracking-tighter">Featured Events</h2>
+              <p className="text-slate-500 mt-2 font-medium">All upcoming experiences on EventMate</p>
+            </div>
+            <Link href="/events">
+              <Button variant="outline" className="border-white/10 text-slate-400 hover:text-white font-black gap-2 group rounded-xl">
+                View All <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+          </div>
+
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {[1, 2, 3].map((i) => <div key={i} className="h-96 bg-slate-800/30 animate-pulse rounded-[2rem] border border-white/5" />)}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {events.slice(0, 6).map((event: any) => (
+                <Card key={event.id} className="group overflow-hidden border-white/5 bg-slate-900/40 hover:border-primary/20 transition-all duration-500">
+                  <div className="aspect-[16/10] relative overflow-hidden bg-slate-800">
+                    {event.image ? (
+                      <img src={event.image} alt={event.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-slate-700 font-black text-xs tracking-widest uppercase">{getEventCategory(event)}</div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
+                    <Badge className="absolute top-4 left-4 bg-slate-900/80 backdrop-blur-md text-primary border-white/10 text-[10px] font-black uppercase tracking-widest">
+                      {getEventCategory(event)}
+                    </Badge>
+                    {event.joiningFee === 0 && (
+                      <Badge className="absolute top-4 right-4 bg-primary/80 text-slate-950 border-none text-[10px] font-black uppercase tracking-widest">Free</Badge>
+                    )}
+                  </div>
+                  <CardContent className="p-7">
+                    <div className="flex items-center gap-3 mb-3 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                      <span className="flex items-center gap-1"><Calendar className="w-3 h-3 text-primary" /> {new Date(event.dateTime).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</span>
+                      <span className="opacity-30">|</span>
+                      <span className="flex items-center gap-1 truncate"><MapPin className="w-3 h-3 text-primary" /> {event.location}</span>
+                    </div>
+                    <h3 className="text-xl font-black text-white mb-3 line-clamp-1 group-hover:text-primary transition-colors">{event.name}</h3>
+                    <p className="text-slate-500 text-sm line-clamp-2 mb-6 leading-relaxed">{event.description}</p>
+                    <div className="flex justify-between items-center pt-4 border-t border-white/5">
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-500">
+                        <Users className="w-4 h-4" />
+                        {event._count?.participants ?? event.participants?.length ?? 0}/{event.maxParticipants} joined
+                      </div>
+                      <Link href={`/events/${event.id}`}>
+                        <Button size="sm" variant="glow" className="rounded-xl font-black text-xs px-5">Details</Button>
+                      </Link>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {events.length === 0 && (
+                <div className="col-span-3 text-center py-16 text-slate-500">No events yet. Be the first to create one!</div>
               )}
             </div>
           )}
